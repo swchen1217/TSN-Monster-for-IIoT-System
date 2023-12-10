@@ -154,6 +154,7 @@ int main(void)
     while (true)
     {
         NRF_LOG_DEBUG("Transmitting packet %02x", tx_payload.data[1]);
+        NRF_LOG_FLUSH();
 
         tx_payload.noack = false;
         if (nrf_esb_write_payload(&tx_payload) == NRF_SUCCESS)
