@@ -1,7 +1,49 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
-  <ARMCrossStudioWindow activeProject="usbd_cdc_acm_pca10056" buildConfiguration="Release"/>
-  <Files>
-    <SessionOpenFile codecName="Default" debugPath="../../../main.c" left="0" name="unnamed" path="../../../main.c" selected="1" top="0" useBinaryEdit="0" useTextEdit="1" x="0" y="0"/>
-  </Files>
+ <Bookmarks/>
+ <Breakpoints groups="Breakpoints" active_group="Breakpoints"/>
+ <ExecutionProfileWindow/>
+ <FrameBufferWindow>
+  <FrameBufferWindow bufferHeight="-1" addressSpace="" addressText="" bufferWidth="-1"/>
+ </FrameBufferWindow>
+ <Memory1/>
+ <Memory2/>
+ <Memory3/>
+ <Memory4/>
+ <Project>
+  <ProjectSessionItem path="usbd_cdc_acm_pca10056"/>
+  <ProjectSessionItem path="usbd_cdc_acm_pca10056;usbd_cdc_acm_pca10056"/>
+  <ProjectSessionItem path="usbd_cdc_acm_pca10056;usbd_cdc_acm_pca10056;Application"/>
+  <ProjectSessionItem path="usbd_cdc_acm_pca10056;usbd_cdc_acm_pca10056;Board Support"/>
+  <ProjectSessionItem path="usbd_cdc_acm_pca10056;usbd_cdc_acm_pca10056;nRF_Libraries"/>
+ </Project>
+ <Register1/>
+ <Register2/>
+ <Register3/>
+ <Register4/>
+ <Threads>
+  <ThreadsWindow showLists=""/>
+ </Threads>
+ <TraceWindow>
+  <Trace enabled="Yes"/>
+ </TraceWindow>
+ <Watch1>
+  <Watches active="1" update="Never"/>
+ </Watch1>
+ <Watch2>
+  <Watches active="0" update="Never"/>
+ </Watch2>
+ <Watch3>
+  <Watches active="0" update="Never"/>
+ </Watch3>
+ <Watch4>
+  <Watches active="0" update="Never"/>
+ </Watch4>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="68" y="265" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="236" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="45" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../integration/nrfx/legacy/nrf_drv_clock.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="67" useTextEdit="1" openedFrom="D:/NCU/MWNL/BLE/TSN-Monster-for-IIoT-System/nRF5_SDK_17.0.2_d674dde/examples/peripheral/usbd_cdc_acm/main.c" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/bsp/bsp.h" selected="0" top="34" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="4832" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="1" top="4816" codecName="Default"/>
+ </Files>
+ <ARMCrossStudioWindow activeProject="usbd_cdc_acm_pca10056" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

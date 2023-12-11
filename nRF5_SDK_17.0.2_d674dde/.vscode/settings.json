@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "sdk_common.h": "c",
+        "nrf_delay.h": "c",
+        "nrf_esb_error_codes.h": "c",
+        "app_usbd_core.h": "c",
+        "app_usbd.h": "c",
+        "app_error.h": "c",
+        "nrf_drv_power.h": "c",
+        "nrf_gpio.h": "c",
+        "app_util.h": "c",
+        "nrf_drv_clock.h": "c",
+        "urllc.h": "c"
+    }
+}

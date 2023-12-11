@@ -134,7 +134,7 @@ APP_USBD_CDC_ACM_GLOBAL_DEF(m_app_cdc_acm,
 #define READ_SIZE 1
 
 static char m_rx_buffer[READ_SIZE];
-static char m_tx_buffer[NRF_DRV_USBD_EPSIZE];
+static char m_usbd_tx_buffer[NRF_DRV_USBD_EPSIZE];
 static bool m_send_flag = 0;
 
 /**
@@ -351,7 +351,7 @@ int main(void)
 
             size_t size = sprintf(m_tx_buffer, "Hello USB CDC FA demo: %u\r\n", frame_counter);
 
-            ret = app_usbd_cdc_acm_write(&m_app_cdc_acm, m_tx_buffer, size);
+            ret = app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
             if (ret == NRF_SUCCESS)
             {
                 ++frame_counter;
