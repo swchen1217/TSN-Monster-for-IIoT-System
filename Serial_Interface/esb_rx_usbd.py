@@ -27,7 +27,7 @@ def read_data(ser, q):
     while (True):
         queue = ser.inWaiting()
         if queue > 0:
-            data = str(ser.readline()).split('\'')[1].split(',')
+            data = ser.read_all().decode('utf-8').split(',')
             data.append(ser.port)
             q.put(data)
             # print(data)
@@ -56,7 +56,7 @@ def check_data(queue):
             if int(data[0]) == num + 1:
                 num = int(data[0])
                 count = count + 1
-                print('S:', data[0], 'D:', data[2].split('\\')[0], 'C:', count, 'L:', data[1], 'E:', err, 'P:', data[3])
+                print('S:', data[0], 'D:', data[2], 'C:', count, 'L:', data[1], 'E:', err, 'P:', data[3])
             else:
                 # pass
                 print('Waiting...', num + 1)

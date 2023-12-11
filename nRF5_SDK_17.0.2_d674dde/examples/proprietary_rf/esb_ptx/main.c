@@ -43,10 +43,6 @@
 #include <stddef.h>
 #include <stdio.h>
 
-// @MWNL Overwrite Begin
-// #define NRF_ESB_MAX_PAYLOAD_LENGTH 64 //!< The maximum size of the payload. Valid values are 1 to 252.
-// @MWNL Overwrite End
-
 #include "sdk_common.h"
 
 #include "nrf.h"
@@ -73,7 +69,7 @@
 #include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
 
-// @MWNL URLLCm Lib
+// @MWNL URLLC Lib
 #include "urllc.h"
 
 // @MWNL TLV Begin
@@ -88,7 +84,6 @@
 // @MWNL ESB Begin
 static nrf_esb_payload_t tx_payload = NRF_ESB_CREATE_PAYLOAD(0, 0x01, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00);
 static nrf_esb_payload_t rx_payload;
-
 // @MWNL ESB End
 
 // @MWNL USBD Begin
@@ -208,10 +203,9 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     urllc_pkt.header.message_id = URLLC_DATA_PKT;
                     memcpy(&urllc_pkt.seq_num, &m_usbd_rx_data[TLV_HEADER_LEN], sizeof(uint32_t));
                     memcpy(&urllc_pkt.data, &m_usbd_rx_data[TLV_HEADER_LEN + sizeof(uint32_t)], val_len - sizeof(uint32_t));
+                    urllc_pkt.data[val_len - sizeof(uint32_t)] = '\0';
                     // urllc_pkt.time_stamp = TIME_SYNC_TIMESTAMP_TO_USEC(ts_timestamp_get_ticks_u64());
                     urllc_pkt.time_stamp = 0;
-                    // NRF_LOG_DEBUG("OK. %s, %d", urllc_pkt.data, val_len - sizeof(uint32_t));
-                    // NRF_LOG_FLUSH();
 
                     // echo
                     size_t size = sprintf(m_usbd_tx_buffer, "%d,%s", urllc_pkt.seq_num, urllc_pkt.data);
@@ -437,48 +431,9 @@ int main(void)
             /* Nothing to do */
         }
 
-        // if(m_send_flag)
-        // {
-        //     static int  frame_counter;
-
-        //     size_t size = sprintf(m_tx_buffer, "Hello USB CDC FA demo: %u\r\n", frame_counter);
-
-        //     ret = app_usbd_cdc_acm_write(&m_app_cdc_acm, m_tx_buffer, size);
-        //     if (ret == NRF_SUCCESS)
-        //     {
-        //         ++frame_counter;
-        //     }
-        // }
-
         UNUSED_RETURN_VALUE(NRF_LOG_PROCESS());
         /* Sleep CPU only if there was no interrupt since last loop processing */
         __WFE();
         // @MWNL USBD End
     }
-
-    // while (true)
-    // {
-
-    //     // @MWNL ESB TX Begin
-    //     NRF_LOG_DEBUG("Transmitting packet %02x", tx_payload.data[1]);
-    //     NRF_LOG_FLUSH();
-
-    //     tx_payload.noack = false;
-    //     if (nrf_esb_write_payload(&tx_payload) == NRF_SUCCESS)
-    //     {
-    //         // Toggle one of the LEDs.
-    //         nrf_gpio_pin_write(LED_1, !(tx_payload.data[1]%8>0 && tx_payload.data[1]%8<=4));
-    //         nrf_gpio_pin_write(LED_2, !(tx_payload.data[1]%8>1 && tx_payload.data[1]%8<=5));
-    //         nrf_gpio_pin_write(LED_3, !(tx_payload.data[1]%8>2 && tx_payload.data[1]%8<=6));
-    //         nrf_gpio_pin_write(LED_4, !(tx_payload.data[1]%8>3));
-    //         tx_payload.data[1]++;
-    //     }
-    //     else
-    //     {
-    //         NRF_LOG_WARNING("Sending packet failed");
-    //     }
-    //     // @MWNL ESB TX End
-
-    //     nrf_delay_us(50000);
-    // }
 }

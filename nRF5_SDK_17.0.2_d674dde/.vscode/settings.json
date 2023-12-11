@@ -11,6 +11,7 @@
         "app_util.h": "c",
         "nrf_drv_clock.h": "c",
         "urllc.h": "c",
-        "app_usbd_string_desc.h": "c"
+        "app_usbd_string_desc.h": "c",
+        "nrf_log_default_backends.h": "c"
     }
 }

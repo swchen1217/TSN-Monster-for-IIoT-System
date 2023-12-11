@@ -133,7 +133,7 @@ APP_USBD_CDC_ACM_GLOBAL_DEF(m_app_cdc_acm,
 
 #define READ_SIZE 1
 
-static char m_rx_buffer[READ_SIZE];
+static char m_usbd_rx_buffer[READ_SIZE];
 static char m_usbd_tx_buffer[NRF_DRV_USBD_EPSIZE];
 static bool m_send_flag = 0;
 
@@ -172,11 +172,11 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
             {
                 /*Get amount of data transfered*/
                 size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
-                NRF_LOG_INFO("RX: size: %lu char: %c", size, m_rx_buffer[0]);
+                NRF_LOG_INFO("RX: size: %lu char: %c", size, m_usbd_rx_buffer[0]);
 
                 /* Fetch data until internal buffer is empty */
                 ret = app_usbd_cdc_acm_read(&m_app_cdc_acm,
-                                            m_rx_buffer,
+                                            m_usbd_rx_buffer,
                                             READ_SIZE);
             } while (ret == NRF_SUCCESS);
 
