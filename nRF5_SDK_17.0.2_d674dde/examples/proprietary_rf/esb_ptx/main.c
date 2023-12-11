@@ -48,6 +48,7 @@
 // @MWNL Overwrite End
 
 #include "sdk_common.h"
+
 #include "nrf.h"
 #include "nrf_esb.h"
 #include "nrf_error.h"
@@ -98,8 +99,6 @@ static nrf_esb_payload_t rx_payload;
 
 #define BTN_CDC_DATA_SEND 0
 #define BTN_CDC_NOTIFY_SEND 1
-
-#define BTN_CDC_DATA_KEY_RELEASE (bsp_event_t)(BSP_EVENT_KEY_LAST + 1)
 
 /**
  * @brief Enable power USB detection
@@ -290,50 +289,6 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
     }
 }
 
-// static void bsp_event_callback(bsp_event_t ev)
-// {
-//     ret_code_t ret;
-//     switch ((unsigned int)ev)
-//     {
-//         case CONCAT_2(BSP_EVENT_KEY_, BTN_CDC_DATA_SEND):
-//         {
-//             m_send_flag = 1;
-//             break;
-//         }
-
-//         case BTN_CDC_DATA_KEY_RELEASE :
-//         {
-//             m_send_flag = 0;
-//             break;
-//         }
-
-//         case CONCAT_2(BSP_EVENT_KEY_, BTN_CDC_NOTIFY_SEND):
-//         {
-//             ret = app_usbd_cdc_acm_serial_state_notify(&m_app_cdc_acm,
-//                                                        APP_USBD_CDC_ACM_SERIAL_STATE_BREAK,
-//                                                        false);
-//             UNUSED_VARIABLE(ret);
-//             break;
-//         }
-
-//         default:
-//             return; // no implementation needed
-//     }
-// }
-
-// static void init_bsp(void)
-// {
-//     ret_code_t ret;
-//     ret = bsp_init(BSP_INIT_BUTTONS, bsp_event_callback);
-//     APP_ERROR_CHECK(ret);
-
-//     UNUSED_RETURN_VALUE(bsp_event_to_button_action_assign(BTN_CDC_DATA_SEND,
-//                                                           BSP_BUTTON_ACTION_RELEASE,
-//                                                           BTN_CDC_DATA_KEY_RELEASE));
-
-//     /* Configure LEDs */
-//     bsp_board_init(BSP_INIT_LEDS);
-// }
 // @MWNL USBD End
 
 // @MWNL ESB Begin
@@ -371,12 +326,6 @@ void clocks_start(void)
         ;
 }
 
-void gpio_init(void)
-{
-    nrf_gpio_range_cfg_output(8, 15);
-    bsp_board_init(BSP_INIT_LEDS);
-}
-
 uint32_t esb_init(void)
 {
     uint32_t ret;
@@ -409,6 +358,14 @@ uint32_t esb_init(void)
 }
 // @MWNL ESB End
 
+// @MWNL GPIO Begin
+void gpio_init(void)
+{
+    nrf_gpio_range_cfg_output(8, 15);
+    bsp_board_init(BSP_INIT_LEDS);
+}
+// @MWNL GPIO End
+
 int main(void)
 {
     ret_code_t ret;
@@ -438,8 +395,6 @@ int main(void)
 
     ret = app_timer_init();
     APP_ERROR_CHECK(ret);
-
-    // init_bsp();
 
     app_usbd_serial_num_generate();
 
