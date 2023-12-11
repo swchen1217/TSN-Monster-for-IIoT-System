@@ -9,6 +9,7 @@ import csv
 import sys
 import struct
 import chn_map_process as cmp
+import hashlib
 
 CDC_ACM_DATA = 0
 CDC_ACM_CHN_UPDATE = 1
@@ -49,6 +50,7 @@ def check_data(queue):
     count = 0
     tmp = []
     err = 0
+    t1 = time.time()
     while (True):
         data = tmp.pop(0) if len(tmp) > 0 else queue.get()
         # print(data)
@@ -56,7 +58,10 @@ def check_data(queue):
             if int(data[0]) == num + 1:
                 num = int(data[0])
                 count = count + 1
-                print('S:', data[0], 'D:', data[2], 'C:', count, 'L:', data[1], 'E:', err, 'P:', data[3])
+                if hashlib.md5(str(data[0]).encode()).hexdigest() != data[2]:
+                    err = err + 1
+                print('S:', data[0], 'D:', data[2], 'C:', count, 'L:', data[1], 'E:', err, 'P:', data[3], 'T:', round((time.time()-t1)*1000))
+                t1 = time.time()
             else:
                 # pass
                 print('Waiting...', num + 1)

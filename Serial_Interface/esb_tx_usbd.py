@@ -9,10 +9,11 @@ import csv
 import sys
 import struct
 import chn_map_process as cmp
+import hashlib
 
 CDC_ACM_DATA = 0
 CDC_ACM_CHN_UPDATE = 1
-URLLC_DATA_INTERVAL = 0.1  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+URLLC_DATA_INTERVAL = 0.000001  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
 CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
@@ -33,6 +34,7 @@ com_lock = threading.Lock()  # Lock for synchronizing access to com_queue
 
 
 def write_data(com, com_queue):
+    t1 = time.time()
     while (True):
         # com.write(struct.pack("I",7)+'1234'.encode())
         # com.write(struct.pack('BB',1,4))
@@ -51,7 +53,8 @@ def write_data(com, com_queue):
                 tlv_data = struct.pack("I", seq_number) + valBytes
                 com.write(tlv_data_header)
                 com.write(tlv_data)
-                print(com.port, 'TX', tlv_data_header, tlv_data)
+                print(com.port, 'TX', tlv_data_header, tlv_data, round((time.time()-t1)*1000))
+                t1 = time.time()
 
             elif data_type == CDC_ACM_CHN_UPDATE:
                 chn_map = q_data['chn_map']
@@ -123,7 +126,7 @@ def generate_cdc_acm_data():
         with com_lock:
             for com_info in com_threads.values():
                 com_queue = com_info['queue']
-                com_queue.put({'type': CDC_ACM_DATA, 'seq_num': seq_number, 'data': str(seq_number)})
+                com_queue.put({'type': CDC_ACM_DATA, 'seq_num': seq_number, 'data': hashlib.md5(str(seq_number).encode()).hexdigest()})
         seq_number += 1
         sleep(URLLC_DATA_INTERVAL)
 
