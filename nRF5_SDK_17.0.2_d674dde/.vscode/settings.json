@@ -10,6 +10,7 @@
         "nrf_gpio.h": "c",
         "app_util.h": "c",
         "nrf_drv_clock.h": "c",
-        "urllc.h": "c"
+        "urllc.h": "c",
+        "app_usbd_string_desc.h": "c"
     }
 }

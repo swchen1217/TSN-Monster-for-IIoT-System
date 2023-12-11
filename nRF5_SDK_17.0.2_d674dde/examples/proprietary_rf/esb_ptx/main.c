@@ -43,6 +43,10 @@
 #include <stddef.h>
 #include <stdio.h>
 
+// @MWNL Overwrite Begin
+// #define NRF_ESB_MAX_PAYLOAD_LENGTH 64 //!< The maximum size of the payload. Valid values are 1 to 252.
+// @MWNL Overwrite End
+
 #include "sdk_common.h"
 #include "nrf.h"
 #include "nrf_esb.h"
@@ -83,6 +87,7 @@
 // @MWNL ESB Begin
 static nrf_esb_payload_t tx_payload = NRF_ESB_CREATE_PAYLOAD(0, 0x01, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00);
 static nrf_esb_payload_t rx_payload;
+
 // @MWNL ESB End
 
 // @MWNL USBD Begin
@@ -217,9 +222,11 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     tx_payload.length = sizeof(urllc_pkt);
                     // nrf_esb_set_retransmit_count(5);
                     // current counter val + 0.5sec is the ch_tick_target
-                    memcpy(tx_payload.data, &urllc_pkt, tx_payload.length);
+                    memcpy(tx_payload.data, &urllc_pkt, sizeof(urllc_pkt));
 
-                    if (nrf_esb_write_payload(&tx_payload) == NRF_SUCCESS)
+                    ret_code_t err = nrf_esb_write_payload(&tx_payload);
+
+                    if (err == NRF_SUCCESS)
                     {
 
                         NRF_LOG_INFO("Sending urllc data pkt succeed");
@@ -227,7 +234,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     }
                     else
                     {
-                        NRF_LOG_WARNING("Sending urllc data packet failed");
+                        NRF_LOG_WARNING("Sending urllc data packet failed: %d", err);
                     }
                 }
                 break;
