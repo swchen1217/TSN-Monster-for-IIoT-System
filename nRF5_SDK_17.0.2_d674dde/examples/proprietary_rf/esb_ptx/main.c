@@ -69,16 +69,36 @@
 #include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
 
+// @MWNL TimeSync Lib
+#include "time_sync.h"
+#include "nrf_gpiote.h"
+#include "nrf_ppi.h"
+#include "nrf_timer.h"
+
 // @MWNL URLLC Lib
 #include "urllc.h"
+
+// @MWNL TimeSync Lib
+#include "time_sync.h"
+
+// @MWNL TimeSync Begin
+static bool m_gpio_trigger_enabled;
+
+static void ts_evt_callback(const ts_evt_t *evt);
+static void ts_gpio_trigger_enable(void);
+static void ts_gpio_trigger_disable(void);
+// @MWNL TimeSync End
 
 // @MWNL TLV Begin
 #define TLV_HEADER_LEN 2 // cdc acm should read two bytes first,type and length each with one byte
 #define TLV_TYPE_INDEX 0
 #define TLV_LENGTH_INDEX 1
 
+// TLV Types
 #define CDC_ACM_DATA 0
 #define CDC_ACM_CHN_MAP_UPDATE 1
+#define CDC_ACM_TS_1 11
+#define CDC_ACM_TS_2 12
 // @MWNL TLV End
 
 // @MWNL ESB Begin
@@ -176,7 +196,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
         // index = 0;
         do
         {
-            // NRF_LOG_INFO("RX: char: %c", m_usbd_rx_buffer[0]);
+            NRF_LOG_INFO("RX: char: %d", m_usbd_rx_buffer[0]);
+            NRF_LOG_FLUSH();
             memcpy(&m_usbd_rx_data[index++], &m_usbd_rx_buffer[0], READ_SIZE);
 
             ret = app_usbd_cdc_acm_read(&m_app_cdc_acm,
@@ -187,17 +208,20 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
             {
                 type = m_usbd_rx_data[TLV_TYPE_INDEX];
                 val_len = m_usbd_rx_data[TLV_LENGTH_INDEX];
+                NRF_LOG_DEBUG("%d, %d", type, val_len);
             }
 
+            // if ((type != CDC_ACM_DATA && index >= TLV_HEADER_LEN) || (type == CDC_ACM_DATA && index >= TLV_HEADER_LEN + val_len))
             if (index >= TLV_HEADER_LEN + val_len)
             {
                 NRF_LOG_DEBUG("TLV OK");
+                NRF_LOG_FLUSH();
 
                 switch (type)
                 {
                 case CDC_ACM_DATA:
                 {
-                    NRF_LOG_DEBUG("RX: CDC_ACM_DATA");
+                    NRF_LOG_DEBUG("USBD RX: CDC_ACM_DATA");
 
                     urllc_payload urllc_pkt;
                     urllc_pkt.header.message_id = URLLC_DATA_PKT;
@@ -229,6 +253,61 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     {
                         NRF_LOG_WARNING("Sending urllc data packet failed: %d", err);
                     }
+                }
+                break;
+                case CDC_ACM_TS_1:
+                {
+                    NRF_LOG_DEBUG("USBD RX: CDC_ACM_TS_1");
+                    NRF_LOG_FLUSH();
+                    bsp_board_led_invert(LED_CDC_ACM_RX);
+
+                    // static bool m_send_sync_pkt = false;
+
+                    // if (m_send_sync_pkt)
+                    // {
+                    //     m_send_sync_pkt = false;
+                    //     m_gpio_trigger_enabled = false;
+
+                    //     bsp_board_leds_off();
+
+                    //     uint32_t err_code = ts_tx_stop();
+                    //     APP_ERROR_CHECK(err_code);
+
+                    //     NRF_LOG_INFO("Stopping sync beacon transmission!\r\n");
+                    // }
+                    // else
+                    // {
+                    //     m_send_sync_pkt = true;
+
+                    //     bsp_board_leds_on();
+
+                    //     uint32_t err_code = ts_tx_start(TIME_SYNC_FREQ_AUTO);
+                    //     APP_ERROR_CHECK(err_code);
+
+                    //     ts_gpio_trigger_enable();
+
+                    //     NRF_LOG_INFO("Starting sync beacon transmission!\r\n");
+                    // }
+                }
+                break;
+                case CDC_ACM_TS_2:
+                {
+                    NRF_LOG_DEBUG("USBD RX: CDC_ACM_TS_2");
+                    bsp_board_led_invert(LED_CDC_ACM_RX);
+
+                    uint64_t time_ticks;
+                    uint32_t time_usec;
+
+                    time_ticks = ts_timestamp_get_ticks_u64();
+                    time_usec = TIME_SYNC_TIMESTAMP_TO_USEC(time_ticks);
+
+                    NRF_LOG_INFO("Timestamp: %d us (%d, %d)", time_usec, time_usec / 1000000, time_usec / 1000);
+                }
+                break;
+                default:
+                {
+                    NRF_LOG_WARNING("USBD RX: TYPE NOT DEFINED");
+                    bsp_board_led_invert(LED_CDC_ACM_RX);
                 }
                 break;
                 }
@@ -360,6 +439,118 @@ void gpio_init(void)
 }
 // @MWNL GPIO End
 
+// @MWNL TimeSync Begin
+static void ts_gpio_trigger_enable(void)
+{
+    uint64_t time_now_ticks;
+    uint32_t time_now_msec;
+    uint32_t time_target;
+    uint32_t err_code;
+
+    if (m_gpio_trigger_enabled)
+    {
+        return;
+    }
+
+    // Round up to nearest second to next 1000 ms to start toggling.
+    // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
+
+    time_now_ticks = ts_timestamp_get_ticks_u64();
+    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+
+    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (1000 * 2);
+    time_target = (time_target / 1000) * 1000;
+
+    err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+    APP_ERROR_CHECK(err_code);
+
+    nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+
+    m_gpio_trigger_enabled = true;
+}
+
+static void ts_gpio_trigger_disable(void)
+{
+    m_gpio_trigger_enabled = false;
+}
+
+static void ts_evt_callback(const ts_evt_t *evt)
+{
+    APP_ERROR_CHECK_BOOL(evt != NULL);
+
+    switch (evt->type)
+    {
+    case TS_EVT_SYNCHRONIZED:
+        ts_gpio_trigger_enable();
+        break;
+    case TS_EVT_DESYNCHRONIZED:
+        ts_gpio_trigger_disable();
+        break;
+    case TS_EVT_TRIGGERED:
+        if (m_gpio_trigger_enabled)
+        {
+            uint32_t tick_target;
+
+            tick_target = evt->params.triggered.tick_target + 1;
+
+            uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+            APP_ERROR_CHECK(err_code);
+        }
+        else
+        {
+            // Ensure pin is low when triggering is stopped
+            nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+        }
+        break;
+    default:
+        APP_ERROR_CHECK_BOOL(false);
+        break;
+    }
+}
+
+static void sync_timer_init(void)
+{
+    uint32_t err_code;
+
+    // Debug pin:
+    // nRF52-DK (PCA10040) Toggle P0.24 from sync timer to allow pin measurement
+    // nRF52840-DK (PCA10056) Toggle P1.14 from sync timer to allow pin measurement
+#if defined(BOARD_PCA10040)
+    nrf_gpiote_task_configure(3, NRF_GPIO_PIN_MAP(0, 24), NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(3);
+#elif defined(BOARD_PCA10056)
+    nrf_gpiote_task_configure(3, NRF_GPIO_PIN_MAP(1, 14), NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(3);
+#else
+#warning Debug pin not set
+#endif
+
+    ts_init_t init_ts =
+        {
+            .high_freq_timer[0] = NRF_TIMER3,
+            .high_freq_timer[1] = NRF_TIMER4,
+            .egu = NRF_EGU3,
+            .egu_irq_type = SWI3_EGU3_IRQn,
+            .evt_handler = ts_evt_callback,
+        };
+
+    err_code = ts_init(&init_ts);
+    APP_ERROR_CHECK(err_code);
+
+    ts_rf_config_t rf_config =
+        {
+            .rf_chn = 80,
+            .rf_addr = {0xDE, 0xAD, 0xBE, 0xEF, 0x19}};
+
+    err_code = ts_enable(&rf_config);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("Started listening for beacons.\r\n");
+    NRF_LOG_INFO("Press Button 1 to start transmitting sync beacons\r\n");
+    NRF_LOG_INFO("GPIO toggling will begin when transmission has started.\r\n");
+}
+// @MWNL TimeSync End
+
 int main(void)
 {
     ret_code_t ret;
@@ -422,6 +613,10 @@ int main(void)
 
     NRF_LOG_DEBUG("Enhanced ShockBurst Transmitter Example started.");
     // @MWNL ESB End
+
+    // @MWNL TimeSync Begin
+    // sync_timer_init();
+    // @MWNL TimeSync End
 
     while (true)
     {

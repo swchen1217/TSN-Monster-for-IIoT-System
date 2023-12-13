@@ -246,7 +246,7 @@ static sync_pkt_t * tx_buf_get(void)
 volatile uint32_t m_prev_sync_pkt_timer;
 volatile uint32_t m_prev_sync_pkt_counter;
 
-void RADIO_IRQHandler(void)
+void RADIO_IRQHandler_2(void)
 {
     if (NRF_RADIO->EVENTS_END != 0)
     {
@@ -378,7 +378,7 @@ static nrf_radio_signal_callback_return_param_t * radio_callback (uint8_t signal
         break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
-        RADIO_IRQHandler();
+        RADIO_IRQHandler_2();
         break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_EXTEND_FAILED:
@@ -1163,32 +1163,32 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
         return NRF_ERROR_INVALID_STATE;
     }
 
-    err_code = sd_clock_hfclk_request();
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
+    //err_code = sd_clock_hfclk_request();
+    //if (err_code != NRF_SUCCESS)
+    //{
+    //    return err_code;
+    //}
 
-    err_code |= sd_power_mode_set(NRF_POWER_MODE_CONSTLAT);
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
+    //err_code |= sd_power_mode_set(NRF_POWER_MODE_CONSTLAT);
+    //if (err_code != NRF_SUCCESS)
+    //{
+    //    return err_code;
+    //}
 
     memcpy(m_params.rf_addr, p_rf_config->rf_addr, sizeof(m_params.rf_addr));
     m_params.rf_chn = p_rf_config->rf_chn;
 
-    err_code = sd_radio_session_open(radio_callback);
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
+    //err_code = sd_radio_session_open(radio_callback);
+    //if (err_code != NRF_SUCCESS)
+    //{
+    //    return err_code;
+    //}
 
-    err_code = sd_radio_request(&m_timeslot_req_earliest);
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
+    //err_code = sd_radio_request(&m_timeslot_req_earliest);
+    //if (err_code != NRF_SUCCESS)
+    //{
+    //    return err_code;
+    //}
 
     ppi_timestamp_timer_configure();
 

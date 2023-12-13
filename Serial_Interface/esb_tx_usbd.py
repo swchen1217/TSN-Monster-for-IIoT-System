@@ -18,6 +18,9 @@ CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
 CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
 
+CDC_ACM_TS_1 = 11
+CDC_ACM_TS_2 = 12
+
 com_list = ['com11', 'com12']
 # com_list = ['com10','com16']
 # com_list = ['com10','com9']
@@ -64,6 +67,17 @@ def write_data(com, com_queue):
                 tlv_data_header = struct.pack('BB', data_type, length)
                 com.write(tlv_data_header)
                 com.write(chn_map_bytes)
+
+            elif data_type == CDC_ACM_TS_1:
+                tlv_data_header = struct.pack('BB', data_type, 0)
+                com.write(tlv_data_header)
+                # com.write(str('aaaa').encode())
+                print(com.port, 'TX', tlv_data_header)
+
+            elif data_type == CDC_ACM_TS_2:
+                tlv_data_header = struct.pack('BB', data_type, 0)
+                com.write(tlv_data_header)
+                print(com.port, 'TX', tlv_data_header)
 
 
 """read data from related serial port
@@ -130,13 +144,20 @@ def generate_cdc_acm_data():
         seq_number += 1
         sleep(URLLC_DATA_INTERVAL)
 
+def test_sync():
+    with com_lock:
+        for com_info in com_threads.values():
+            com_queue = com_info['queue']
+            com_queue.put({'type': CDC_ACM_TS_1})
 
 def main():
     # chn_update_thread = threading.Thread(target=update_chn_map)
     # chn_update_thread.start()
     com_port_init()
     # cmp.open_qos_device()
-    generate_cdc_acm_data()
+
+    # generate_cdc_acm_data()
+    test_sync()
 
 
 if __name__ == '__main__':
