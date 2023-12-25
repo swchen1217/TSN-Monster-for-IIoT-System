@@ -6,6 +6,9 @@
 #define     CH_PKT                              2 
 
 #define     URLLC_PAYLOAD_LENGTH                32
+
+#define SYNC_INTERVAL     700 //(ms)
+
 typedef struct
 {
     uint8_t message_id;    //recogonize sync_pkt or urllc_payload 
@@ -31,7 +34,7 @@ typedef struct
     urllc_header header;
     int32_t  timer_val;
     uint32_t counter_val;
-   
+    int32_t  rtc_val;
 } sync_pkt_t;
 
 typedef struct

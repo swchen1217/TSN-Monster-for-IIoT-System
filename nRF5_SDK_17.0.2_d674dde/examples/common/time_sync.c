@@ -23,7 +23,7 @@
  *    Nordic Semiconductor ASA integrated circuit.
  *
  * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
+ *    engineered, decompiled, modified and/or disassemb             +led.
  *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -61,6 +61,7 @@
 #define NRF_LOG_MODULE_NAME time_sync
 #define NRF_LOG_LEVEL 4
 #include "nrf_log.h"
+#include "nrf_log_ctrl.h"
 NRF_LOG_MODULE_REGISTER();
 
 #if   defined ( __CC_ARM )
@@ -118,12 +119,13 @@ typedef struct
     IRQn_Type               egu_irq_type;
 } ts_params_t;
 
-typedef PACKED_STRUCT
-{
-    int32_t  timer_val;
-    int32_t  rtc_val;
-    uint32_t counter_val;
-} sync_pkt_t;
+// typedef PACKED_STRUCT
+// {
+//     int32_t  timer_val;
+//     int32_t  rtc_val;
+
+//     uint32_t counter_val;
+// } sync_pkt_t;
 
 static uint8_t          m_sync_pkt_ringbuf[10][sizeof(sync_pkt_t)];
 static nrf_atomic_u32_t m_sync_pkt_ringbuf_idx;
@@ -1149,19 +1151,21 @@ uint32_t ts_init(const ts_init_t * p_init)
     return NRF_SUCCESS;
 }
 
-uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
+uint32_t ts_enable()
 {
-    uint32_t err_code;
+    // @MWNL Disable
 
-    if (p_rf_config == NULL || p_rf_config->rf_addr == NULL)
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
+    // uint32_t err_code;
 
-    if (m_timeslot_session_open)
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
+    // if (p_rf_config == NULL || p_rf_config->rf_addr == NULL)
+    // {
+    //     return NRF_ERROR_INVALID_PARAM;
+    // }
+
+    // if (m_timeslot_session_open)
+    // {
+    //     return NRF_ERROR_INVALID_STATE;
+    // }
 
     //err_code = sd_clock_hfclk_request();
     //if (err_code != NRF_SUCCESS)
@@ -1175,9 +1179,10 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
     //    return err_code;
     //}
 
-    memcpy(m_params.rf_addr, p_rf_config->rf_addr, sizeof(m_params.rf_addr));
-    m_params.rf_chn = p_rf_config->rf_chn;
+    // memcpy(m_params.rf_addr, p_rf_config->rf_addr, sizeof(m_params.rf_addr));
+    // m_params.rf_chn = p_rf_config->rf_chn;
 
+    // @MWNL Disable
     //err_code = sd_radio_session_open(radio_callback);
     //if (err_code != NRF_SUCCESS)
     //{
@@ -1199,8 +1204,8 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
     m_params.egu->INTENCLR = 0xFFFFFFFF;
     m_params.egu->INTENSET = EGU_INTENSET_TRIGGERED0_Msk | EGU_INTENSET_TRIGGERED2_Msk | EGU_INTENSET_TRIGGERED3_Msk | EGU_INTENSET_TRIGGERED4_Msk | EGU_INTENSET_TRIGGERED5_Msk;
 
-    m_blocked_cancelled_count  = 0;
-    m_radio_state              = RADIO_STATE_IDLE;
+    // m_blocked_cancelled_count  = 0;
+    // m_radio_state              = RADIO_STATE_IDLE;
 
     nrf_atomic_flag_clear(&m_send_sync_pkt);
 
@@ -1208,7 +1213,7 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
     ppi_sync_timer_clear_configure();
     sync_timer_start();
 
-    nrf_atomic_flag_set(&m_timeslot_session_open);
+    // nrf_atomic_flag_set(&m_timeslot_session_open);
 
     return NRF_SUCCESS;
 }
@@ -1313,4 +1318,14 @@ uint64_t ts_timestamp_get_ticks_u64(void)
     timestamp += (uint64_t) sync_timer_val;
 
     return timestamp;
+}
+
+void take_sync_timer_val(sync_pkt_t* p_pkt)
+{
+    uint32_t sync_timer_val;
+    uint32_t count_timer_val;
+    uint32_t  peer_count;
+    timers_capture(&sync_timer_val, &count_timer_val, &peer_count);
+    p_pkt->counter_val = count_timer_val;
+    p_pkt->timer_val = sync_timer_val;
 }

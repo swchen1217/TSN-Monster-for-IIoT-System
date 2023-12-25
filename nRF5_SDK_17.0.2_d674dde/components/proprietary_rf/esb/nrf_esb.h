@@ -156,6 +156,8 @@ STATIC_ASSERT(NRF_ESB_PIPE_COUNT <= 8);
 }
 
 
+// @MWNL tx_output_power, retransmit_count
+
 /** @brief Default radio parameters.
  *  @details Roughly equal to the nRF24Lxx default parameters (except for CRC, which is set to 16 bit, and protocol, which is set to DPL). */
 #define NRF_ESB_DEFAULT_CONFIG {.protocol               = NRF_ESB_PROTOCOL_ESB_DPL,         \
@@ -163,9 +165,9 @@ STATIC_ASSERT(NRF_ESB_PIPE_COUNT <= 8);
                                 .event_handler          = 0,                                \
                                 .bitrate                = NRF_ESB_BITRATE_2MBPS,            \
                                 .crc                    = NRF_ESB_CRC_16BIT,                \
-                                .tx_output_power        = NRF_ESB_TX_POWER_0DBM,            \
+                                .tx_output_power        = NRF_ESB_TX_POWER_8DBM,            \
                                 .retransmit_delay       = 250,                              \
-                                .retransmit_count       = 3,                                \
+                                .retransmit_count       = 0,                                \
                                 .tx_mode                = NRF_ESB_TXMODE_AUTO,              \
                                 .radio_irq_priority     = 1,                                \
                                 .event_irq_priority     = 2,                                \
@@ -180,7 +182,7 @@ STATIC_ASSERT(NRF_ESB_PIPE_COUNT <= 8);
                                 .event_handler          = 0,                                \
                                 .bitrate                = NRF_ESB_BITRATE_2MBPS,            \
                                 .crc                    = NRF_ESB_CRC_8BIT,                 \
-                                .tx_output_power        = NRF_ESB_TX_POWER_0DBM,            \
+                                .tx_output_power        = NRF_ESB_TX_POWER_8DBM,            \
                                 .retransmit_delay       = 600,                              \
                                 .retransmit_count       = 3,                                \
                                 .tx_mode                = NRF_ESB_TXMODE_AUTO,              \

@@ -174,9 +174,10 @@ static nrf_esb_payload_tx_fifo_t    m_tx_fifo;
 static nrf_esb_payload_t            m_rx_fifo_payload[NRF_ESB_RX_FIFO_SIZE];
 static nrf_esb_payload_rx_fifo_t    m_rx_fifo;
 
+// @MWNL buffer size
 // Payload buffers
-static  uint8_t                     m_tx_payload_buffer[NRF_ESB_MAX_PAYLOAD_LENGTH + 2];
-static  uint8_t                     m_rx_payload_buffer[NRF_ESB_MAX_PAYLOAD_LENGTH + 2];
+static  uint8_t                     m_tx_payload_buffer[NRF_ESB_MAX_PAYLOAD_LENGTH + 3];
+static  uint8_t                     m_rx_payload_buffer[NRF_ESB_MAX_PAYLOAD_LENGTH + 3];
 
 // Random access buffer variables for better ACK payload handling
 nrf_esb_payload_random_access_buf_wrapper_t m_ack_pl_container[NRF_ESB_TX_FIFO_SIZE];
@@ -973,6 +974,7 @@ void RADIO_IRQHandler()
         {
             on_radio_end();
         }
+
     }
 
     if (NRF_RADIO->EVENTS_DISABLED && (NRF_RADIO->INTENSET & RADIO_INTENSET_DISABLED_Msk))

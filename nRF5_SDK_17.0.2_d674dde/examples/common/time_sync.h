@@ -46,6 +46,8 @@
 
 #include "nrfx.h"
 
+#include "urllc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -155,7 +157,9 @@ typedef struct
  *
  * @retval NRF_SUCCESS if successful
  */
-uint32_t ts_enable(const ts_rf_config_t* p_rf_config);
+// uint32_t ts_enable(const ts_rf_config_t* p_rf_config);
+// @MWNL remove arg
+uint32_t ts_enable(void);
 
 /**@brief Disable time sync library.
  *
@@ -242,5 +246,7 @@ uint64_t ts_timestamp_get_ticks_u64(void);
 #ifdef __cplusplus
 }
 #endif
+
+void take_sync_timer_val(sync_pkt_t* p_pkt);
 
 #endif /* __TIME_SYNC_H__ */

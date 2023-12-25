@@ -148,7 +148,7 @@ def test_sync():
     with com_lock:
         for com_info in com_threads.values():
             com_queue = com_info['queue']
-            com_queue.put({'type': CDC_ACM_TS_1})
+            com_queue.put({'type': CDC_ACM_TS_2})
 
 def main():
     # chn_update_thread = threading.Thread(target=update_chn_map)

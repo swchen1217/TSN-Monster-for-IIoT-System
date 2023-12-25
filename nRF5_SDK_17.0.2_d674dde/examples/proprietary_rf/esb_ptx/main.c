@@ -74,12 +74,10 @@
 #include "nrf_gpiote.h"
 #include "nrf_ppi.h"
 #include "nrf_timer.h"
+#include "app_timer.h"
 
 // @MWNL URLLC Lib
 #include "urllc.h"
-
-// @MWNL TimeSync Lib
-#include "time_sync.h"
 
 // @MWNL TimeSync Begin
 static bool m_gpio_trigger_enabled;
@@ -87,6 +85,8 @@ static bool m_gpio_trigger_enabled;
 static void ts_evt_callback(const ts_evt_t *evt);
 static void ts_gpio_trigger_enable(void);
 static void ts_gpio_trigger_disable(void);
+
+APP_TIMER_DEF(sync_pkt_send_timer); // timer udddddddsed for triggering sending sync pkt
 // @MWNL TimeSync End
 
 // @MWNL TLV Begin
@@ -217,6 +217,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                 NRF_LOG_DEBUG("TLV OK");
                 NRF_LOG_FLUSH();
 
+                bsp_board_led_invert(LED_CDC_ACM_RX);
+
                 switch (type)
                 {
                 case CDC_ACM_DATA:
@@ -247,7 +249,6 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     {
 
                         NRF_LOG_INFO("Sending urllc data pkt succeed");
-                        bsp_board_led_invert(LED_CDC_ACM_RX);
                     }
                     else
                     {
@@ -259,41 +260,39 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                 {
                     NRF_LOG_DEBUG("USBD RX: CDC_ACM_TS_1");
                     NRF_LOG_FLUSH();
-                    bsp_board_led_invert(LED_CDC_ACM_RX);
 
-                    // static bool m_send_sync_pkt = false;
+                    static bool m_send_sync_pkt = false;
 
-                    // if (m_send_sync_pkt)
-                    // {
-                    //     m_send_sync_pkt = false;
-                    //     m_gpio_trigger_enabled = false;
+                    if (m_send_sync_pkt)
+                    {
+                        m_send_sync_pkt = false;
+                        m_gpio_trigger_enabled = false;
 
-                    //     bsp_board_leds_off();
+                        bsp_board_leds_off();
 
-                    //     uint32_t err_code = ts_tx_stop();
-                    //     APP_ERROR_CHECK(err_code);
+                        uint32_t err_code = ts_tx_stop();
+                        APP_ERROR_CHECK(err_code);
 
-                    //     NRF_LOG_INFO("Stopping sync beacon transmission!\r\n");
-                    // }
-                    // else
-                    // {
-                    //     m_send_sync_pkt = true;
+                        NRF_LOG_INFO("Stopping sync beacon transmission!\r\n");
+                    }
+                    else
+                    {
+                        m_send_sync_pkt = true;
 
-                    //     bsp_board_leds_on();
+                        bsp_board_leds_on();
 
-                    //     uint32_t err_code = ts_tx_start(TIME_SYNC_FREQ_AUTO);
-                    //     APP_ERROR_CHECK(err_code);
+                        uint32_t err_code = ts_tx_start(TIME_SYNC_FREQ_AUTO);
+                        APP_ERROR_CHECK(err_code);
 
-                    //     ts_gpio_trigger_enable();
+                        ts_gpio_trigger_enable();
 
-                    //     NRF_LOG_INFO("Starting sync beacon transmission!\r\n");
-                    // }
+                        NRF_LOG_INFO("Starting sync beacon transmission!\r\n");
+                    }
                 }
                 break;
                 case CDC_ACM_TS_2:
                 {
                     NRF_LOG_DEBUG("USBD RX: CDC_ACM_TS_2");
-                    bsp_board_led_invert(LED_CDC_ACM_RX);
 
                     uint64_t time_ticks;
                     uint32_t time_usec;
@@ -542,12 +541,60 @@ static void sync_timer_init(void)
             .rf_chn = 80,
             .rf_addr = {0xDE, 0xAD, 0xBE, 0xEF, 0x19}};
 
-    err_code = ts_enable(&rf_config);
+    // err_code = ts_enable(&rf_config);
+    err_code = ts_enable();
     APP_ERROR_CHECK(err_code);
 
-    NRF_LOG_INFO("Started listening for beacons.\r\n");
-    NRF_LOG_INFO("Press Button 1 to start transmitting sync beacons\r\n");
-    NRF_LOG_INFO("GPIO toggling will begin when transmission has started.\r\n");
+    NRF_LOG_INFO("Started listening for beacons.");
+    NRF_LOG_INFO("Press Button 1 to start transmitting sync beacons");
+    NRF_LOG_INFO("GPIO toggling will begin when transmission has started.");
+}
+
+// send sync packet periodically (Period : SYNC_INTERVAL)
+static void sync_pkt_send_timer_handler(void *p_context)
+{
+    // NRF_LOG_WARNING("run sync_pkt_send_timer_handler......");
+    // if(!urllc_pkt_in_progress){
+    if (true)
+    {
+        //   NRF_LOG_WARNING("run sync_pkt_send......");
+
+        tx_payload.length = sizeof(sync_pkt_t); // set tx_payload length packet length
+        tx_payload.noack = true;                // sync packet is not required ack
+        sync_pkt_t *p_pkt;
+        p_pkt = (sync_pkt_t *)malloc(sizeof(sync_pkt_t));
+        p_pkt->header.message_id = SYNC_PKT;
+        take_sync_timer_val(p_pkt);
+        // nrf_gpio_pin_set(TEST_PIN);
+        memcpy(tx_payload.data, p_pkt, sizeof(sync_pkt_t));
+        ret_code_t ret = nrf_esb_write_payload(&tx_payload);
+        //   APP_ERROR_CHECK(ret);
+        if (ret == NRF_SUCCESS)
+        {
+            NRF_LOG_INFO("Sending sync packet succeed");
+        }
+        else
+        {
+            NRF_LOG_WARNING("Sending sync failed: %d", ret);
+        }
+        free(p_pkt);
+    }
+    // nrf_gpio_pin_clear(TEST_PIN);
+}
+
+static void config_timers()
+{
+    ret_code_t err_code;
+
+    // Create timers
+    err_code = app_timer_create(&sync_pkt_send_timer,
+                                APP_TIMER_MODE_REPEATED,
+                                sync_pkt_send_timer_handler);
+    // err_code = app_timer_create(&chn_pkt_send_timer,
+    //                              APP_TIMER_MODE_SINGLE_SHOT,
+    //                              ch_pkt_send_timer_handler);
+
+    APP_ERROR_CHECK(err_code);
 }
 // @MWNL TimeSync End
 
@@ -615,7 +662,12 @@ int main(void)
     // @MWNL ESB End
 
     // @MWNL TimeSync Begin
-    // sync_timer_init();
+    sync_timer_init();
+
+    config_timers();
+    // send sync packet each (SYNC_INTERVAL)ms using app timer
+    ret = app_timer_start(sync_pkt_send_timer, APP_TIMER_TICKS(SYNC_INTERVAL), NULL);
+    APP_ERROR_CHECK(ret);
     // @MWNL TimeSync End
 
     while (true)
