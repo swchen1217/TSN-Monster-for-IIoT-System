@@ -104,7 +104,7 @@ static void ppi_sync_timer_adjust_enable(void);
 static void ppi_sync_timer_clear_configure(void);
 static void ppi_sync_timer_clear_disable(void);
 static void ppi_radio_rx_disable(void);
-static void ppi_radio_rx_configure(void);
+void ppi_radio_rx_configure(void);
 static void ppi_radio_tx_configure(void);
 static uint32_t ppi_sync_trigger_configure(uint32_t ppi_endpoint);
 
@@ -250,6 +250,8 @@ volatile uint32_t m_prev_sync_pkt_counter;
 
 void RADIO_IRQHandler_2(void)
 {
+    NRF_LOG_INFO("RADIO_IRQHandler_2.");
+    NRF_LOG_FLUSH();
     if (NRF_RADIO->EVENTS_END != 0)
     {
         NRF_RADIO->EVENTS_END = 0;
@@ -936,7 +938,7 @@ static void ppi_sync_timer_adjust_configure(bool shorten)
     NRF_PPI->CHG[chg0]           = (1 << chn0) | (1 << chn1) | (1 << chn2);
 }
 
-static void ppi_radio_rx_configure(void)
+void ppi_radio_rx_configure(void)
 {
     uint32_t chn;
 

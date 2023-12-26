@@ -69,8 +69,24 @@
 #include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
 
+// @MWNL TimeSync Lib
+#include "time_sync.h"
+#include "nrf_gpiote.h"
+#include "nrf_ppi.h"
+#include "nrf_timer.h"
+#include "app_timer.h"
+#include "nrf_atomic.h"
+
 // @MWNL URLLC Lib
 #include "urllc.h"
+
+// @MWNL TimeSync Begin
+static bool m_gpio_trigger_enabled;
+
+static void ts_evt_callback(const ts_evt_t *evt);
+static void ts_gpio_trigger_enable(void);
+static void ts_gpio_trigger_disable(void);
+// @MWNL TimeSync End
 
 // @MWNL ESB Begin
 nrf_esb_payload_t rx_payload;
@@ -319,6 +335,123 @@ void gpio_init(void)
 }
 // @MWNL GPIO End
 
+// @MWNL TimeSync Begin
+static void ts_gpio_trigger_enable(void)
+{
+    uint64_t time_now_ticks;
+    uint32_t time_now_msec;
+    uint32_t time_target;
+    uint32_t err_code;
+
+    if (m_gpio_trigger_enabled)
+    {
+        return;
+    }
+
+    // Round up to nearest second to next 1000 ms to start toggling.
+    // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
+
+    time_now_ticks = ts_timestamp_get_ticks_u64();
+    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+
+    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (1000 * 2);
+    time_target = (time_target / 1000) * 1000;
+
+    err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+    APP_ERROR_CHECK(err_code);
+
+    nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+
+    m_gpio_trigger_enabled = true;
+}
+
+static void ts_gpio_trigger_disable(void)
+{
+    m_gpio_trigger_enabled = false;
+}
+
+static void ts_evt_callback(const ts_evt_t *evt)
+{
+    APP_ERROR_CHECK_BOOL(evt != NULL);
+
+    switch (evt->type)
+    {
+    case TS_EVT_SYNCHRONIZED:
+        NRF_LOG_INFO("TS_EVT_SYNCHRONIZED.");
+        ts_gpio_trigger_enable();
+        break;
+    case TS_EVT_DESYNCHRONIZED:
+        NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED.");
+        ts_gpio_trigger_disable();
+        break;
+    case TS_EVT_TRIGGERED:
+        NRF_LOG_INFO("TS_EVT_TRIGGERED.");
+        if (m_gpio_trigger_enabled)
+        {
+            uint32_t tick_target;
+
+            tick_target = evt->params.triggered.tick_target + 1;
+
+            uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+            APP_ERROR_CHECK(err_code);
+        }
+        else
+        {
+            // Ensure pin is low when triggering is stopped
+            nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+        }
+        break;
+    default:
+        APP_ERROR_CHECK_BOOL(false);
+        break;
+    }
+}
+
+static void sync_timer_init(void)
+{
+    uint32_t err_code;
+
+    // Debug pin:
+    // nRF52-DK (PCA10040) Toggle P0.24 from sync timer to allow pin measurement
+    // nRF52840-DK (PCA10056) Toggle P1.14 from sync timer to allow pin measurement
+#if defined(BOARD_PCA10040)
+    nrf_gpiote_task_configure(3, NRF_GPIO_PIN_MAP(0, 24), NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(3);
+#elif defined(BOARD_PCA10056)
+    nrf_gpiote_task_configure(3, NRF_GPIO_PIN_MAP(1, 14), NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(3);
+#else
+#warning Debug pin not set
+#endif
+
+    ts_init_t init_ts =
+        {
+            .high_freq_timer[0] = NRF_TIMER3,
+            .high_freq_timer[1] = NRF_TIMER4,
+            .egu = NRF_EGU3,
+            .egu_irq_type = SWI3_EGU3_IRQn,
+            .evt_handler = ts_evt_callback,
+        };
+
+    err_code = ts_init(&init_ts);
+    APP_ERROR_CHECK(err_code);
+
+    ts_rf_config_t rf_config =
+        {
+            .rf_chn = 80,
+            .rf_addr = {0xDE, 0xAD, 0xBE, 0xEF, 0x19}};
+
+    // err_code = ts_enable(&rf_config);
+    err_code = ts_enable();
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("Started listening for beacons.");
+    NRF_LOG_INFO("Press Button 1 to start transmitting sync beacons");
+    NRF_LOG_INFO("GPIO toggling will begin when transmission has started.");
+}
+
+// @MWNL TimeSync End
+
 int main(void)
 {
     ret_code_t ret;
@@ -384,6 +517,8 @@ int main(void)
     ret = nrf_esb_start_rx();
     APP_ERROR_CHECK(ret);
     // @MWNL ESB End
+
+    sync_timer_init();
 
     while (true)
     {

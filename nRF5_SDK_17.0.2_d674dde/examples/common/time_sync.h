@@ -243,6 +243,8 @@ uint32_t ts_timestamp_get_ticks_u32(void);
  */
 uint64_t ts_timestamp_get_ticks_u64(void);
 
+void ppi_radio_rx_configure(void);
+
 #ifdef __cplusplus
 }
 #endif

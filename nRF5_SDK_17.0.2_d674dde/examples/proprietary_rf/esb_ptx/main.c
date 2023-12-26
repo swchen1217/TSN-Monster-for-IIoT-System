@@ -75,6 +75,7 @@
 #include "nrf_ppi.h"
 #include "nrf_timer.h"
 #include "app_timer.h"
+#include "nrf_atomic.h"
 
 // @MWNL URLLC Lib
 #include "urllc.h"
@@ -87,6 +88,8 @@ static void ts_gpio_trigger_enable(void);
 static void ts_gpio_trigger_disable(void);
 
 APP_TIMER_DEF(sync_pkt_send_timer); // timer udddddddsed for triggering sending sync pkt
+
+static nrf_atomic_flag_t urllc_pkt_in_progress = false; // this flag is set when urllc pkt is processing
 // @MWNL TimeSync End
 
 // @MWNL TLV Begin
@@ -196,8 +199,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
         // index = 0;
         do
         {
-            NRF_LOG_INFO("RX: char: %d", m_usbd_rx_buffer[0]);
-            NRF_LOG_FLUSH();
+            // NRF_LOG_INFO("RX: char: %d", m_usbd_rx_buffer[0]);
+            // NRF_LOG_FLUSH();
             memcpy(&m_usbd_rx_data[index++], &m_usbd_rx_buffer[0], READ_SIZE);
 
             ret = app_usbd_cdc_acm_read(&m_app_cdc_acm,
@@ -208,7 +211,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
             {
                 type = m_usbd_rx_data[TLV_TYPE_INDEX];
                 val_len = m_usbd_rx_data[TLV_LENGTH_INDEX];
-                NRF_LOG_DEBUG("%d, %d", type, val_len);
+                // NRF_LOG_DEBUG("%d, %d", type, val_len);
             }
 
             // if ((type != CDC_ACM_DATA && index >= TLV_HEADER_LEN) || (type == CDC_ACM_DATA && index >= TLV_HEADER_LEN + val_len))
@@ -224,6 +227,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                 case CDC_ACM_DATA:
                 {
                     NRF_LOG_DEBUG("USBD RX: CDC_ACM_DATA");
+
+                    nrf_atomic_flag_set(&urllc_pkt_in_progress);
 
                     urllc_payload urllc_pkt;
                     urllc_pkt.header.message_id = URLLC_DATA_PKT;
@@ -254,6 +259,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     {
                         NRF_LOG_WARNING("Sending urllc data packet failed: %d", err);
                     }
+
+                    nrf_atomic_flag_clear(&urllc_pkt_in_progress);
                 }
                 break;
                 case CDC_ACM_TS_1:
@@ -554,9 +561,13 @@ static void sync_timer_init(void)
 static void sync_pkt_send_timer_handler(void *p_context)
 {
     // NRF_LOG_WARNING("run sync_pkt_send_timer_handler......");
-    // if(!urllc_pkt_in_progress){
-    if (true)
+    if (urllc_pkt_in_progress)
     {
+        NRF_LOG_WARNING("urllc_pkt_in_progress");
+    }
+    if (!urllc_pkt_in_progress)
+    {
+        // if (true)
         //   NRF_LOG_WARNING("run sync_pkt_send......");
 
         tx_payload.length = sizeof(sync_pkt_t); // set tx_payload length packet length
@@ -666,7 +677,7 @@ int main(void)
 
     config_timers();
     // send sync packet each (SYNC_INTERVAL)ms using app timer
-    ret = app_timer_start(sync_pkt_send_timer, APP_TIMER_TICKS(SYNC_INTERVAL), NULL);
+    // ret = app_timer_start(sync_pkt_send_timer, APP_TIMER_TICKS(SYNC_INTERVAL), NULL);
     APP_ERROR_CHECK(ret);
     // @MWNL TimeSync End
 
