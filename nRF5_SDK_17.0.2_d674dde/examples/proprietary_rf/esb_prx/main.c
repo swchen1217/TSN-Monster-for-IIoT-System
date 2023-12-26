@@ -309,7 +309,7 @@ uint32_t esb_init(void)
     nrf_esb_config.bitrate = NRF_ESB_BITRATE_2MBPS;
     nrf_esb_config.mode = NRF_ESB_MODE_PRX;
     nrf_esb_config.event_handler = nrf_esb_event_handler;
-    nrf_esb_config.selective_auto_ack = false;
+    nrf_esb_config.selective_auto_ack = true;
 
     ret = nrf_esb_init(&nrf_esb_config);
     VERIFY_SUCCESS(ret);

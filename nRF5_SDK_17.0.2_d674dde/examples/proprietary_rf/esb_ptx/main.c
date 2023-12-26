@@ -677,7 +677,7 @@ int main(void)
 
     config_timers();
     // send sync packet each (SYNC_INTERVAL)ms using app timer
-    // ret = app_timer_start(sync_pkt_send_timer, APP_TIMER_TICKS(SYNC_INTERVAL), NULL);
+    ret = app_timer_start(sync_pkt_send_timer, APP_TIMER_TICKS(SYNC_INTERVAL), NULL);
     APP_ERROR_CHECK(ret);
     // @MWNL TimeSync End
 

@@ -1024,6 +1024,8 @@ void RADIO_IRQHandler()
         // Call the correct on_radio_disable function, depending on the current protocol state
         if (on_radio_disabled)
         {
+            // NRF_LOG_INFO("on_radio_disabled, %d, %d", on_radio_disabled_rx, on_radio_disabled_rx_ack);
+            // NRF_LOG_INFO("on_radio_disabled(), %d", on_radio_disabled);
             on_radio_disabled();
         }
     }
