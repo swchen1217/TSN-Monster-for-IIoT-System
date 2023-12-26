@@ -246,7 +246,7 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
 
                 uint32_t ts_peer = r_data->time_stamp;
                 // uint32_t latency = ts_local - ts_peer;
-                
+
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d,%s",r_data->seq_num,latency,r_data->data);
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d",r_data->seq_num,latency);
 
@@ -255,16 +255,20 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
                 app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
             }
             break;
-                // case SYNC_PKT:{
+            case SYNC_PKT:
+            {
+                NRF_LOG_INFO("RECEIVED SYNC_PKT");
+                // NRF_LOG_FLUSH();
 
-                //    NRF_LOG_INFO("RECEIVED SYNC_PKT");
-                //    NRF_LOG_FLUSH();
-
-                //}
-                // break;
+                sync_pkt_t *r_data;
+                r_data = (sync_pkt_t *)rx_payload.data;
+                size_t size = sprintf(m_usbd_tx_buffer, "%d,%d,%d\r\n", r_data->timer_val, r_data->counter_val, r_data->rtc_val);
+                app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
             }
+            break;
+            }
+            break;
         }
-        break;
     }
 }
 

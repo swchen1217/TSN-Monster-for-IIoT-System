@@ -411,7 +411,7 @@ uint32_t esb_init(void)
     nrf_esb_config.bitrate = NRF_ESB_BITRATE_2MBPS;
     nrf_esb_config.event_handler = nrf_esb_event_handler;
     nrf_esb_config.mode = NRF_ESB_MODE_PTX;
-    nrf_esb_config.selective_auto_ack = false;
+    nrf_esb_config.selective_auto_ack = true;
 
     ret = nrf_esb_init(&nrf_esb_config);
 
@@ -568,7 +568,7 @@ static void sync_pkt_send_timer_handler(void *p_context)
         // nrf_gpio_pin_set(TEST_PIN);
         memcpy(tx_payload.data, p_pkt, sizeof(sync_pkt_t));
         ret_code_t ret = nrf_esb_write_payload(&tx_payload);
-        //   APP_ERROR_CHECK(ret);
+        APP_ERROR_CHECK(ret);
         if (ret == NRF_SUCCESS)
         {
             NRF_LOG_INFO("Sending sync packet succeed");

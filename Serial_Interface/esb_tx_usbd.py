@@ -13,7 +13,8 @@ import hashlib
 
 CDC_ACM_DATA = 0
 CDC_ACM_CHN_UPDATE = 1
-URLLC_DATA_INTERVAL = 0.000001  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+# URLLC_DATA_INTERVAL = 0.000001  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+URLLC_DATA_INTERVAL = 0.5  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
 CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
@@ -156,8 +157,8 @@ def main():
     com_port_init()
     # cmp.open_qos_device()
 
-    # generate_cdc_acm_data()
-    test_sync()
+    generate_cdc_acm_data()
+    # test_sync()
 
 
 if __name__ == '__main__':
