@@ -977,14 +977,15 @@ void RADIO_IRQHandler()
             {
             case SYNC_PKT:
             {
-                NRF_LOG_INFO("RECEIVED SYNC_PKT");
-
-                // NRF_LOG_DEBUG("RECEIVED SYNC_PKT");
+                // NRF_LOG_INFO("RECEIVED SYNC_PKT");
 
                 // bool adjustment_procedure_started;
                 sync_pkt_t *p_pkt;
                 p_pkt = (sync_pkt_t *)&m_rx_payload_buffer[2];
                 NRF_LOG_DEBUG("SYNC_PKT: %d, %d", p_pkt->timer_val, p_pkt->counter_val);
+
+                sync_timer_offset_compensate(p_pkt);
+
                 // NRF_LOG_INFO("%u",p_pkt -> counter_val);
                 // adjustment_procedure_started = sync_timer_offset_compensate(p_pkt);
                 // nrf_gpio_pin_clear(TEST_PIN);
@@ -996,17 +997,17 @@ void RADIO_IRQHandler()
                 //     p_pkt = tx_buf_get();
                 // }
 
-                // clear_events_restart_rx();
+                clear_events_restart_rx();
             }
             break;
             case URLLC_DATA_PKT:
             {
                 NRF_LOG_INFO("RECEIVED URLLC_DATA_PKT");
 
-                // if (on_radio_disabled)
-                // {
-                //     on_radio_disabled();
-                // }
+                if (on_radio_disabled)
+                {
+                    on_radio_disabled();
+                }
             }
             break;
             default:
@@ -1022,12 +1023,12 @@ void RADIO_IRQHandler()
         }
 
         // Call the correct on_radio_disable function, depending on the current protocol state
-        if (on_radio_disabled)
-        {
-            // NRF_LOG_INFO("on_radio_disabled, %d, %d", on_radio_disabled_rx, on_radio_disabled_rx_ack);
-            // NRF_LOG_INFO("on_radio_disabled(), %d", on_radio_disabled);
-            on_radio_disabled();
-        }
+        // if (on_radio_disabled)
+        // {
+        //     // NRF_LOG_INFO("on_radio_disabled, %d, %d", on_radio_disabled_rx, on_radio_disabled_rx_ack);
+        //     // NRF_LOG_INFO("on_radio_disabled(), %d", on_radio_disabled);
+        //     on_radio_disabled();
+        // }
     }
 
     DEBUG_PIN_CLR(DEBUGPIN1);

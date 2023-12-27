@@ -245,6 +245,8 @@ uint64_t ts_timestamp_get_ticks_u64(void);
 
 void ppi_radio_rx_configure(void);
 
+bool sync_timer_offset_compensate(sync_pkt_t * p_pkt);
+
 #ifdef __cplusplus
 }
 #endif

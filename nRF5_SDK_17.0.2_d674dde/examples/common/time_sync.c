@@ -170,7 +170,7 @@ static volatile enum
 } m_radio_state = RADIO_STATE_IDLE;
 
 static void ppi_counter_timer_triggered_capture_configure(nrf_ppi_channel_t chn[2], uint32_t eep);
-static bool sync_timer_offset_compensate(sync_pkt_t * p_pkt);
+// bool sync_timer_offset_compensate(sync_pkt_t * p_pkt);
 static void timeslot_begin_handler(void);
 static void timeslot_end_handler(void);
 
@@ -808,7 +808,7 @@ void SWI3_EGU3_IRQHandler(void)
     }
 }
 
-static inline bool sync_timer_offset_compensate(sync_pkt_t * p_pkt)
+inline bool sync_timer_offset_compensate(sync_pkt_t * p_pkt)
 {
     uint32_t peer_timer;
     uint32_t local_timer;
