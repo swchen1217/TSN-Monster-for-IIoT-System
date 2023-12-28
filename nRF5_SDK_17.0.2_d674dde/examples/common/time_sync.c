@@ -817,11 +817,13 @@ inline bool sync_timer_offset_compensate(sync_pkt_t * p_pkt)
 
     if (nrf_atomic_flag_set_fetch(&m_timer_update_in_progress))
     {
+        NRF_LOG_DEBUG("nrf_atomic_flag_set_fetch(&m_timer_update_in_progress)");
         return false;
     }
 
     peer_timer  = p_pkt->timer_val;
     peer_timer += TX_CHAIN_DELAY;
+    // peer_timer += 4000;
     if (peer_timer >= TIME_SYNC_TIMER_MAX_VAL)
     {
         peer_timer -= TIME_SYNC_TIMER_MAX_VAL;
@@ -832,12 +834,13 @@ inline bool sync_timer_offset_compensate(sync_pkt_t * p_pkt)
     local_timer = m_params.high_freq_timer[0]->CC[1];
     timer_offset = local_timer - peer_timer;
 
-    // NRF_LOG_INFO("Local=%lu,Remote=%lu,diff=%d", local_timer, peer_timer, timer_offset);
+    NRF_LOG_INFO("Local=%lu, Remote=%lu, diff=%d", local_timer, peer_timer, timer_offset);
 
     if (local_timer > TIME_SYNC_TIMER_MAX_VAL)
     {
         // Todo: Investigate if this is a corner case with a root cause that needs to be handled
         nrf_atomic_flag_clear(&m_timer_update_in_progress);
+        NRF_LOG_DEBUG("local_timer > TIME_SYNC_TIMER_MAX_VAL");
         return false;
     }
 
@@ -846,6 +849,7 @@ inline bool sync_timer_offset_compensate(sync_pkt_t * p_pkt)
         // Already in sync
         nrf_atomic_u32_add(&m_used_packet_count, 1);
         nrf_atomic_flag_clear(&m_timer_update_in_progress);
+        NRF_LOG_DEBUG("Already in sync");
         return false;
     }
 
@@ -854,6 +858,7 @@ inline bool sync_timer_offset_compensate(sync_pkt_t * p_pkt)
         // Too close
         // Todo: see if local counter increment can be accounted for
         nrf_atomic_flag_clear(&m_timer_update_in_progress);
+        NRF_LOG_DEBUG("Too close");
         return false;
     }
 

@@ -378,28 +378,28 @@ static void ts_evt_callback(const ts_evt_t *evt)
     {
     case TS_EVT_SYNCHRONIZED:
         NRF_LOG_INFO("TS_EVT_SYNCHRONIZED.");
-        ts_gpio_trigger_enable();
+        // ts_gpio_trigger_enable();
         break;
     case TS_EVT_DESYNCHRONIZED:
         NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED.");
-        ts_gpio_trigger_disable();
+        // ts_gpio_trigger_disable();
         break;
     case TS_EVT_TRIGGERED:
         NRF_LOG_INFO("TS_EVT_TRIGGERED.");
-        if (m_gpio_trigger_enabled)
-        {
-            uint32_t tick_target;
+        // if (m_gpio_trigger_enabled)
+        // {
+        //     uint32_t tick_target;
 
-            tick_target = evt->params.triggered.tick_target + 1;
+        //     tick_target = evt->params.triggered.tick_target + 1;
 
-            uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
-            APP_ERROR_CHECK(err_code);
-        }
-        else
-        {
-            // Ensure pin is low when triggering is stopped
-            nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
-        }
+        //     uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+        //     APP_ERROR_CHECK(err_code);
+        // }
+        // else
+        // {
+        //     // Ensure pin is low when triggering is stopped
+        //     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+        // }
         break;
     default:
         APP_ERROR_CHECK_BOOL(false);
@@ -514,11 +514,12 @@ int main(void)
 
     NRF_LOG_DEBUG("Enhanced ShockBurst Receiver Example started.");
 
+    // @MWNL TimeSync
+    sync_timer_init();
+
     ret = nrf_esb_start_rx();
     APP_ERROR_CHECK(ret);
     // @MWNL ESB End
-
-    sync_timer_init();
 
     while (true)
     {

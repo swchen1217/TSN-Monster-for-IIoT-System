@@ -984,7 +984,8 @@ void RADIO_IRQHandler()
                 p_pkt = (sync_pkt_t *)&m_rx_payload_buffer[2];
                 NRF_LOG_DEBUG("SYNC_PKT: %d, %d", p_pkt->timer_val, p_pkt->counter_val);
 
-                sync_timer_offset_compensate(p_pkt);
+                bool ok = sync_timer_offset_compensate(p_pkt);
+                // NRF_LOG_DEBUG("sync_timer_offset_compensate: %d", ok);
 
                 // NRF_LOG_INFO("%u",p_pkt -> counter_val);
                 // adjustment_procedure_started = sync_timer_offset_compensate(p_pkt);
