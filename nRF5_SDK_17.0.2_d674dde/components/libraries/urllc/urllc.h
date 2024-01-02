@@ -7,7 +7,7 @@
 
 #define     URLLC_PAYLOAD_LENGTH                32
 
-#define SYNC_INTERVAL     700 //(ms)
+#define SYNC_INTERVAL     1000 //(ms)
 
 typedef struct
 {

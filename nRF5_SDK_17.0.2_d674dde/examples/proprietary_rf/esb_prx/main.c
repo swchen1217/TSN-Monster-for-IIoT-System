@@ -255,19 +255,19 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
                 NRF_LOG_DEBUG("RECEIVED URLLC_DATA_PKT");
                 // NRF_LOG_FLUSH();
 
-                // uint64_t time_ticks = ts_timestamp_get_ticks_u64();
-                // uint32_t ts_local = TIME_SYNC_TIMESTAMP_TO_USEC(time_ticks);
                 urllc_payload *r_data;
                 r_data = (urllc_payload *)rx_payload.data;
 
+                uint64_t time_ticks = ts_timestamp_get_ticks_u64();
+                uint32_t ts_local = TIME_SYNC_TIMESTAMP_TO_USEC(time_ticks);
                 uint32_t ts_peer = r_data->time_stamp;
-                // uint32_t latency = ts_local - ts_peer;
+                uint32_t latency = ts_local - ts_peer;
 
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d,%s",r_data->seq_num,latency,r_data->data);
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d",r_data->seq_num,latency);
 
-                // size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, latency, r_data->data);
-                size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, r_data->time_stamp, r_data->data);
+                size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, latency, r_data->data);
+                // size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, r_data->time_stamp, r_data->data);
                 app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
             }
             break;
@@ -276,10 +276,10 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
                 NRF_LOG_INFO("RECEIVED SYNC_PKT");
                 // NRF_LOG_FLUSH();
 
-                sync_pkt_t *r_data;
-                r_data = (sync_pkt_t *)rx_payload.data;
-                size_t size = sprintf(m_usbd_tx_buffer, "%d,%d,%d\r\n", r_data->timer_val, r_data->counter_val, r_data->rtc_val);
-                app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
+                // sync_pkt_t *r_data;
+                // r_data = (sync_pkt_t *)rx_payload.data;
+                // size_t size = sprintf(m_usbd_tx_buffer, "%d,%d,%d", r_data->timer_val, r_data->counter_val, r_data->rtc_val);
+                // app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
             }
             break;
             }
@@ -359,6 +359,7 @@ static void ts_gpio_trigger_enable(void)
 
     err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
     APP_ERROR_CHECK(err_code);
+    // NRF_LOG_ERROR("%d", err_code);
 
     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
 
@@ -378,28 +379,28 @@ static void ts_evt_callback(const ts_evt_t *evt)
     {
     case TS_EVT_SYNCHRONIZED:
         NRF_LOG_INFO("TS_EVT_SYNCHRONIZED.");
-        // ts_gpio_trigger_enable();
+        ts_gpio_trigger_enable();
         break;
     case TS_EVT_DESYNCHRONIZED:
         NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED.");
         // ts_gpio_trigger_disable();
         break;
     case TS_EVT_TRIGGERED:
-        NRF_LOG_INFO("TS_EVT_TRIGGERED.");
-        // if (m_gpio_trigger_enabled)
-        // {
-        //     uint32_t tick_target;
+        // NRF_LOG_INFO("TS_EVT_TRIGGERED.");
+        if (m_gpio_trigger_enabled)
+        {
+            uint32_t tick_target;
 
-        //     tick_target = evt->params.triggered.tick_target + 1;
+            tick_target = evt->params.triggered.tick_target + 1;
 
-        //     uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
-        //     APP_ERROR_CHECK(err_code);
-        // }
-        // else
-        // {
-        //     // Ensure pin is low when triggering is stopped
-        //     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
-        // }
+            uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+            APP_ERROR_CHECK(err_code);
+        }
+        else
+        {
+            // Ensure pin is low when triggering is stopped
+            nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+        }
         break;
     default:
         APP_ERROR_CHECK_BOOL(false);
