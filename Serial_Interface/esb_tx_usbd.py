@@ -13,8 +13,8 @@ import hashlib
 
 CDC_ACM_DATA = 0
 CDC_ACM_CHN_UPDATE = 1
-# URLLC_DATA_INTERVAL = 0.000001  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
-URLLC_DATA_INTERVAL = 0.5  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+URLLC_DATA_INTERVAL = 0.000001  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+# URLLC_DATA_INTERVAL = 0.5  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
 CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
@@ -144,6 +144,8 @@ def generate_cdc_acm_data():
                 com_queue.put({'type': CDC_ACM_DATA, 'seq_num': seq_number, 'data': hashlib.md5(str(seq_number).encode()).hexdigest()})
         seq_number += 1
         sleep(URLLC_DATA_INTERVAL)
+        if seq_number > 100000:
+            break
 
 def test_sync():
     with com_lock:
