@@ -57,7 +57,7 @@ extern "C" {
 #endif
 
 #ifndef TIME_SYNC_TIMER_MAX_VAL
-#define TIME_SYNC_TIMER_MAX_VAL (16000)
+#define TIME_SYNC_TIMER_MAX_VAL (40000)
 #endif
 
 #ifndef TIME_SYNC_RTC_MAX_VAL

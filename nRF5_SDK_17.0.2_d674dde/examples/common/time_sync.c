@@ -810,17 +810,21 @@ inline bool sync_timer_offset_compensate(sync_pkt_t *p_pkt)
 
     if (nrf_atomic_flag_set_fetch(&m_timer_update_in_progress))
     {
-        NRF_LOG_DEBUG("nrf_atomic_flag_set_fetch(&m_timer_update_in_progress)");
+        NRF_LOG_DEBUG("m_timer_update_in_progress");
         return false;
     }
 
+    // peer_timer = p_pkt->timer_val;
     peer_timer = p_pkt->timer_val + 2950;
     // peer_timer += TX_CHAIN_DELAY;
     // peer_timer += 4000;
 
     NRF_LOG_INFO("timer_val=%lu, peer_timer=%lu", p_pkt->timer_val, peer_timer);
+    NRF_LOG_INFO("local_counter=%lu, peer_counter=%lu", m_params.high_freq_timer[1]->CC[1] + m_master_counter_diff, p_pkt->counter_val);
 
     if (peer_timer >= TIME_SYNC_TIMER_MAX_VAL)
+
+    
     {
         peer_timer -= TIME_SYNC_TIMER_MAX_VAL;
         p_pkt->counter_val += 1;
@@ -829,6 +833,9 @@ inline bool sync_timer_offset_compensate(sync_pkt_t *p_pkt)
 
     local_timer = m_params.high_freq_timer[0]->CC[1];
     timer_offset = local_timer - peer_timer;
+
+    // if (timer_offset < 100 && timer_offset > -100)
+    //     timer_offset = 0;
 
     NRF_LOG_INFO("Local=%lu, Remote=%lu, diff=%d", local_timer, peer_timer, timer_offset);
 
@@ -860,6 +867,9 @@ inline bool sync_timer_offset_compensate(sync_pkt_t *p_pkt)
 
     bool shorten_cycle = timer_offset < 0;
 
+    if(shorten_cycle)
+        NRF_LOG_WARNING("shorten_cycle");
+
     m_params.high_freq_timer[0]->CC[2] = TIME_SYNC_TIMER_MAX_VAL + timer_offset;
     ppi_sync_timer_adjust_configure(shorten_cycle);
 
@@ -887,6 +897,9 @@ inline bool sync_timer_offset_compensate(sync_pkt_t *p_pkt)
         ppi_sync_timer_adjust_enable();
         ppi_sync_timer_clear_disable();
     }
+
+    // NRF_LOG_INFO("NEW Local=%lu, Remote=%lu, diff=%d", m_params.high_freq_timer[0]->CC[1], peer_timer, m_params.high_freq_timer[0]->CC[1]-peer_timer);
+    // NRF_LOG_INFO("NEW local_counter=%lu, peer_counter=%lu", m_params.high_freq_timer[1]->CC[1] + m_master_counter_diff, p_pkt->counter_val);
 
     return true;
 }

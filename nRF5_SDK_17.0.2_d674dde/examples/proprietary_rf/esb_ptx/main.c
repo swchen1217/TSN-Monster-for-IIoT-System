@@ -236,7 +236,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     memcpy(&urllc_pkt.data, &m_usbd_rx_data[TLV_HEADER_LEN + sizeof(uint32_t)], val_len - sizeof(uint32_t));
                     urllc_pkt.data[val_len - sizeof(uint32_t)] = '\0';
                     urllc_pkt.time_stamp = TIME_SYNC_TIMESTAMP_TO_USEC(ts_timestamp_get_ticks_u64());
-                    
+
                     // echo
                     size_t size = sprintf(m_usbd_tx_buffer, "%d,%s", urllc_pkt.seq_num, urllc_pkt.data);
                     app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
@@ -486,13 +486,15 @@ static void ts_evt_callback(const ts_evt_t *evt)
     switch (evt->type)
     {
     case TS_EVT_SYNCHRONIZED:
+        NRF_LOG_INFO("TS_EVT_SYNCHRONIZED.");
         ts_gpio_trigger_enable();
         break;
     case TS_EVT_DESYNCHRONIZED:
+        NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED.");
         ts_gpio_trigger_disable();
         break;
     case TS_EVT_TRIGGERED:
-        
+
         if (m_gpio_trigger_enabled)
         {
             uint32_t tick_target;

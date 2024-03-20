@@ -266,7 +266,7 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d,%s",r_data->seq_num,latency,r_data->data);
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d",r_data->seq_num,latency);
 
-                size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, latency, r_data->data);
+                size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s,%d", r_data->seq_num, latency, r_data->data, rx_payload.rssi);
                 // size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, r_data->time_stamp, r_data->data);
                 app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
             }
@@ -383,7 +383,7 @@ static void ts_evt_callback(const ts_evt_t *evt)
         break;
     case TS_EVT_DESYNCHRONIZED:
         NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED.");
-        // ts_gpio_trigger_disable();
+        ts_gpio_trigger_disable();
         break;
     case TS_EVT_TRIGGERED:
         // NRF_LOG_INFO("TS_EVT_TRIGGERED.");

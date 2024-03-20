@@ -60,7 +60,7 @@ def check_data(queue):
                 count = count + 1
                 if hashlib.md5(str(data[0]).encode()).hexdigest() != data[2]:
                     err = err + 1
-                print('S:', data[0], 'D:', data[2], 'C:', count, 'L:', data[1], 'E:', err, 'P:', data[3], 'T:', round((time.time()-t1)*1000))
+                print('S:', data[0], 'D:', data[2], 'C:', count, 'L:', data[1], 'E:', err, 'P:', data[4], 'T:', round((time.time()-t1)*1000), 'RSSI:', "-"+str(data[3])+"dbm")
                 t1 = time.time()
             else:
                 # pass
