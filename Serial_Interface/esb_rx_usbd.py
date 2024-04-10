@@ -77,7 +77,7 @@ def check_data(queue, max_count):
     err = 0
     start_time = time.time()
 
-    with open('log_test_v1.txt', 'w') as log_file:
+    with open(f'log_test_{start_time}.txt', 'w') as log_file:
         # while True:
         while count < max_count:
             data = queue.get() 
@@ -90,19 +90,23 @@ def check_data(queue, max_count):
                     print(err_msg)
                     err += 1
                 
-                    log_file.write(f"{datetime.now()}: {err_msg}\n")
+                    # log_file.write(f"{datetime.now()}: {err_msg}\n")
                 num = int(data[0])
                 
                 if hashlib.md5(str(data[0]).encode()).hexdigest() != data[2]:
                     err_msg = f"Hash mismatch on sequence {data[0]}"
                     print(err_msg)
                     err += 1
-                    log_file.write(f"{datetime.now()}: {err_msg}\n")
-                    log_file.flush()         
+                    # log_file.write(f"{datetime.now()}: {err_msg}\n")
+                    # log_file.flush()
                                         
                 # log_file.write(f"{datetime.now()}: {err_msg}\n")
                 count += 1
                 print(f"S: {data[0]}, D: {data[2]}, C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((current_time-start_time)*1000)}, RSSI: -{data[3]}dbm")
+                log_file.write(f"{round((current_time-start_time)*1000)},{data[0]},{data[1]}\n")
+                if count % 1000 == 0:
+                    log_file.flush()
+
 
 
 def main():
