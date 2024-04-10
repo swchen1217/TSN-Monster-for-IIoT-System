@@ -102,8 +102,8 @@ def check_data(queue, max_count):
                                         
                 # log_file.write(f"{datetime.now()}: {err_msg}\n")
                 count += 1
-                print(f"S: {data[0]}, D: {data[2]}, C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((current_time-start_time)*1000)}, RSSI: -{data[3]}dbm")
-                log_file.write(f"{round((current_time-start_time)*1000)},{data[0]},{data[1]}\n")
+                print(f"S: {data[0]}, D: {data[2]}, C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((current_time-start_time)*1000)/1000}, RSSI: -{data[3]}dbm")
+                log_file.write(f"{round((current_time-start_time)*1000)/1000},{data[0]},{data[1]}\n")
                 if count % 1000 == 0:
                     log_file.flush()
 
