@@ -13,7 +13,7 @@ import hashlib
 
 CDC_ACM_DATA = 0
 CDC_ACM_CHN_UPDATE = 1
-URLLC_DATA_INTERVAL = 0.000001  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+URLLC_DATA_INTERVAL = 0.02  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 # URLLC_DATA_INTERVAL = 0.5  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
@@ -22,7 +22,9 @@ CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
 CDC_ACM_TS_1 = 11
 CDC_ACM_TS_2 = 12
 
-com_list = ['com11', 'com12']
+# com_list = ['com11', 'com12']
+com_list = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2', '/dev/ttyACM3']
+# com_list = ['/dev/ttyACM1']
 # com_list = ['com10','com16']
 # com_list = ['com10','com9']
 # com_list = ['com10','com9','com12']
@@ -37,7 +39,7 @@ com_lock = threading.Lock()  # Lock for synchronizing access to com_queue
 """
 
 
-def write_data(com, com_queue):
+def write_data(com, queue):
     t1 = time.time()
     while (True):
         # com.write(struct.pack("I",7)+'1234'.encode())
@@ -45,8 +47,8 @@ def write_data(com, com_queue):
         # print(struct.pack('BB',1,4))
         # sleep(2)
         # print('running...')
-        if not com_queue.empty():
-            q_data = com_queue.get()
+        if not queue.empty():
+            q_data = queue.get()
             data_type = q_data['type']
             if data_type == CDC_ACM_DATA:
                 val = q_data['data']
@@ -55,9 +57,9 @@ def write_data(com, com_queue):
                 seq_number = q_data['seq_num']
                 tlv_data_header = struct.pack('BB', data_type, length + 4)
                 tlv_data = struct.pack("I", seq_number) + valBytes
-                com.write(tlv_data_header)
-                com.write(tlv_data)
-                print(com.port, 'TX', tlv_data_header, tlv_data, round((time.time()-t1)*1000))
+                com.write(tlv_data_header + tlv_data)
+                # print(round((time.time()-t1)*1000))
+                # print(com.port, 'TX', seq_number, val, round((time.time()-t1)*1000))
                 t1 = time.time()
 
             elif data_type == CDC_ACM_CHN_UPDATE:
@@ -79,6 +81,8 @@ def write_data(com, com_queue):
                 tlv_data_header = struct.pack('BB', data_type, 0)
                 com.write(tlv_data_header)
                 print(com.port, 'TX', tlv_data_header)
+        else:
+            sleep(0.000001)
 
 
 """read data from related serial port
@@ -101,20 +105,22 @@ def read_data(ser, q):
 
 
 def com_port_init():
-    com_queue = queue.Queue(0)
     write_thread_assigned_list = []
     # open com and assign thread
     for com_name in com_list:
         try:
+            new_queue = queue.Queue(0)
             opened_com = serial.Serial(com_name, 115200, timeout=0.5)
-            write_thread = threading.Thread(target=write_data, args=(opened_com, com_queue))
+            write_thread = threading.Thread(target=write_data, args=(opened_com, new_queue))
             write_thread_assigned_list.append(write_thread)
-            com_threads[com_name] = {'thread': write_thread, 'queue': com_queue}
+            com_threads[com_name] = {'thread': write_thread, 'queue': new_queue}
             # assigned read_data task to thread for relative comport and start it immediately
-            read_thread = threading.Thread(target=read_data, args=(opened_com, com_queue))
+            read_thread = threading.Thread(target=read_data, args=(opened_com, new_queue))
             read_thread.start()
         except serial.SerialException as e:
             print(f"Failed to open COM port {com_name}. Error: {str(e)}")
+    # per_generate()
+    # print("Per Generate Data OK!")
     # start assigned thread
     for assigned_thread in write_thread_assigned_list:
         assigned_thread.start()
@@ -140,18 +146,31 @@ def generate_cdc_acm_data():
     while True:
         with com_lock:
             for com_info in com_threads.values():
+                # print(com_info)
                 com_queue = com_info['queue']
-                com_queue.put({'type': CDC_ACM_DATA, 'seq_num': seq_number, 'data': hashlib.md5(str(seq_number).encode()).hexdigest()})
+                com_queue.put({'type': CDC_ACM_DATA, 'seq_num': seq_number,
+                               'data': hashlib.md5(str(seq_number).encode()).hexdigest()})
+                # print("TX",com_info[''])
         seq_number += 1
         sleep(URLLC_DATA_INTERVAL)
         if seq_number > 100000:
             break
+
+
+def per_generate():
+    for com_info in com_threads.values():
+        com_queue = com_info['queue']
+        for seq_number in range(1, 100001):
+            com_queue.put({'type': CDC_ACM_DATA, 'seq_num': seq_number,
+                           'data': hashlib.md5(str(seq_number).encode()).hexdigest()})
+
 
 def test_sync():
     with com_lock:
         for com_info in com_threads.values():
             com_queue = com_info['queue']
             com_queue.put({'type': CDC_ACM_TS_2})
+
 
 def main():
     # chn_update_thread = threading.Thread(target=update_chn_map)

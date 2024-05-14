@@ -22,8 +22,8 @@ CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
 
 # com_list = ['com17']
 # com_list = ['com17', 'com18']
-com_list = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2', '/dev/ttyACM3', '/dev/ttyACM4']
-#com_list = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2']
+com_list = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2', '/dev/ttyACM3']
+# com_list = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2']
 com_threads = {}
 com_lock = threading.Lock()  # Lock for synchronizing access to com_queue
 
@@ -77,36 +77,34 @@ def check_data(queue, max_count):
     err = 0
     start_time = time.time()
 
-    with open(f'log_test_{start_time}.txt', 'w') as log_file:
+    with open(f'log_test_{datetime.now()}.txt', 'w') as log_file:
         # while True:
         while count < max_count:
-            data = queue.get() 
+            data = queue.get()
             current_time = time.time()
             # log_file.write(f"{datetime.now()}\n")
-         
+
             if data[0].isdigit() and int(data[0]) > num:
                 if int(data[0]) != num + 1:
                     err_msg = f"Lost packet at expected sequence {num + 1}. Actual sequence {data[0]}"
                     print(err_msg)
                     err += 1
-                
-                    # log_file.write(f"{datetime.now()}: {err_msg}\n")
+
+                    log_file.write(f"{round((time.time() - start_time) * 1000) / 1000}: {err_msg}\n")
+                    log_file.flush()
                 num = int(data[0])
-                
+
                 if hashlib.md5(str(data[0]).encode()).hexdigest() != data[2]:
                     err_msg = f"Hash mismatch on sequence {data[0]}"
                     print(err_msg)
                     err += 1
-                    # log_file.write(f"{datetime.now()}: {err_msg}\n")
-                    # log_file.flush()
-                                        
-                # log_file.write(f"{datetime.now()}: {err_msg}\n")
-                count += 1
-                print(f"S: {data[0]}, D: {data[2]}, C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((current_time-start_time)*1000)/1000}, RSSI: -{data[3]}dbm")
-                log_file.write(f"{round((current_time-start_time)*1000)/1000},{data[0]},{data[1]}\n")
-                if count % 1000 == 0:
+                    log_file.write(f"{round((time.time() - start_time) * 1000) / 1000}: {err_msg}\n")
                     log_file.flush()
 
+                    # log_file.write(f"{datetime.now()}: {err_msg}\n")
+                count += 1
+                print(
+                    f"S: {data[0]}, D: {data[2]}, C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((time.time() - start_time) * 1000) / 1000}, RSSI: -{data[3]}dbm")
 
 
 def main():
@@ -114,6 +112,7 @@ def main():
     com_port_init(data_queue)
     # check_data(data_queue)
     check_data(data_queue, 100000)
+
 
 if __name__ == '__main__':
     main()
