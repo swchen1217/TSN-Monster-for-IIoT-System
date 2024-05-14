@@ -77,7 +77,7 @@ def check_data(queue, max_count):
     err = 0
     start_time = time.time()
 
-    with open(f'log_test_{datetime.now()}.txt', 'w') as log_file:
+    with open(f'log_test_{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.txt', 'w') as log_file:
         # while True:
         while count < max_count:
             data = queue.get()
