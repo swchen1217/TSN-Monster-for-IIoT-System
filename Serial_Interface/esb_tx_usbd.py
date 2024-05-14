@@ -2,18 +2,14 @@ import threading
 import time
 from time import sleep
 import serial
-import sys
 import queue
-import pandas as pd
-import csv
-import sys
 import struct
 import chn_map_process as cmp
 import hashlib
 
 CDC_ACM_DATA = 0
 CDC_ACM_CHN_UPDATE = 1
-URLLC_DATA_INTERVAL = 0.02  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
+URLLC_DATA_INTERVAL = 0.01  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 # URLLC_DATA_INTERVAL = 0.5  # 0.1 sleep URLLC_DATA_INTERVAL(seconds) between sending data(sync or urllc) to comport
 CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
@@ -52,7 +48,7 @@ def write_data(com, queue):
             data_type = q_data['type']
             if data_type == CDC_ACM_DATA:
                 val = q_data['data']
-                valBytes = str(val).encode()
+                valBytes = str(val*7).encode()
                 length = len(valBytes)
                 seq_number = q_data['seq_num']
                 tlv_data_header = struct.pack('BB', data_type, length + 4)

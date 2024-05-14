@@ -2,15 +2,8 @@ import threading
 import time
 from datetime import datetime
 
-from time import sleep
 import serial
-import sys
 import queue
-import pandas as pd
-import csv
-import sys
-import struct
-import chn_map_process as cmp
 import hashlib
 
 CDC_ACM_DATA = 0
@@ -94,7 +87,7 @@ def check_data(queue, max_count):
                     log_file.flush()
                 num = int(data[0])
 
-                if hashlib.md5(str(data[0]).encode()).hexdigest() != data[2]:
+                if str(hashlib.md5(str(data[0]).encode()).hexdigest())*7 != str(data[2]):
                     err_msg = f"Hash mismatch on sequence {data[0]}"
                     print(err_msg)
                     err += 1
@@ -104,7 +97,7 @@ def check_data(queue, max_count):
                     # log_file.write(f"{datetime.now()}: {err_msg}\n")
                 count += 1
                 print(
-                    f"S: {data[0]}, D: {data[2]}, C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((time.time() - start_time) * 1000) / 1000}, RSSI: -{data[3]}dbm")
+                    f"S: {data[0]}, D: {data[2][:32]}..., C: {count}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((time.time() - start_time) * 1000) / 1000}, RSSI: -{data[3]}dbm")
 
 
 def main():
