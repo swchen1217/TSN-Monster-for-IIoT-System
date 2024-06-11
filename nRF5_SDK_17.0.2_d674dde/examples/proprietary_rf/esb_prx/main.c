@@ -167,7 +167,9 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
         bsp_board_led_off(LED_CDC_ACM_OPEN);
         break;
     case APP_USBD_CDC_ACM_USER_EVT_TX_DONE:
-        bsp_board_led_invert(LED_CDC_ACM_TX);
+        // bsp_board_led_invert(LED_CDC_ACM_TX);
+        // bsp_board_led_on(LED_CDC_ACM_TX);
+        // bsp_board_led_off(LED_CDC_ACM_TX);
         break;
     case APP_USBD_CDC_ACM_USER_EVT_RX_DONE:
     {
@@ -252,11 +254,16 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
             {
             case URLLC_DATA_PKT:
             {
+
+                bsp_board_led_on(LED_CDC_ACM_TX);
+                
                 NRF_LOG_DEBUG("RECEIVED URLLC_DATA_PKT");
                 // NRF_LOG_FLUSH();
 
                 urllc_payload *r_data;
                 r_data = (urllc_payload *)rx_payload.data;
+
+                NRF_LOG_DEBUG("RECEIVED %d", r_data->seq_num);
 
                 uint64_t time_ticks = ts_timestamp_get_ticks_u64();
                 uint32_t ts_local = TIME_SYNC_TIMESTAMP_TO_USEC(time_ticks);
@@ -265,10 +272,14 @@ void nrf_esb_event_handler(nrf_esb_evt_t const *p_event)
 
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d,%s",r_data->seq_num,latency,r_data->data);
                 // size_t size = sprintf(m_usbd_tx_buffer,"%d,%d",r_data->seq_num,latency);
-
+        
+                // bsp_board_led_on(LED_CDC_ACM_TX);
+                
                 size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s,%d", r_data->seq_num, latency, r_data->data, rx_payload.rssi);
                 // size_t size = sprintf(m_usbd_tx_buffer, "%u,%d,%s", r_data->seq_num, r_data->time_stamp, r_data->data);
                 app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
+
+                bsp_board_led_off(LED_CDC_ACM_TX);
             }
             break;
             case SYNC_PKT:

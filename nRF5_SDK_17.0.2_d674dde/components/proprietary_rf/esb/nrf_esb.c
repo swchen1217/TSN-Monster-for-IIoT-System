@@ -980,12 +980,22 @@ void RADIO_IRQHandler()
                 // NRF_LOG_INFO("RECEIVED SYNC_PKT");
 
                 // bool adjustment_procedure_started;
-                sync_pkt_t *p_pkt;
-                p_pkt = (sync_pkt_t *)&m_rx_payload_buffer[2];
+                sync_pkt_t *p_pkt = (sync_pkt_t*)malloc(sizeof(sync_pkt_t));
+                memcpy(p_pkt, &m_rx_payload_buffer[2], sizeof(sync_pkt_t));
+                // p_pkt = (sync_pkt_t *)&m_rx_payload_buffer[2];
                 NRF_LOG_DEBUG("SYNC_PKT: %d, %d", p_pkt->timer_val, p_pkt->counter_val);
+
+                if (p_pkt->timer_val > TIME_SYNC_TIMER_MAX_VAL)
+                {
+                    free(p_pkt);
+                    clear_events_restart_rx();
+                    return;
+                }
 
                 bool ok = sync_timer_offset_compensate(p_pkt);
                 // NRF_LOG_DEBUG("sync_timer_offset_compensate: %d", ok);
+
+                free(p_pkt);
 
                 // NRF_LOG_INFO("%u",p_pkt -> counter_val);
                 // adjustment_procedure_started = sync_timer_offset_compensate(p_pkt);
@@ -1004,12 +1014,15 @@ void RADIO_IRQHandler()
             break;
             case URLLC_DATA_PKT:
             {
-                NRF_LOG_INFO("RECEIVED URLLC_DATA_PKT");
+                NRF_LOG_INFO("RECEIVED URLLC_DATA_PKT"); 
+                // NRF_LOG_INFO("on_radio_disabled, %d, %d", on_radio_disabled_rx, on_radio_disabled_rx_ack);
+                // NRF_LOG_INFO("on_radio_disabled(), %d", on_radio_disabled);
 
                 if (on_radio_disabled)
                 {
                     on_radio_disabled();
                 }
+                return;
             }
             break;
             default:
@@ -1027,8 +1040,6 @@ void RADIO_IRQHandler()
         // Call the correct on_radio_disable function, depending on the current protocol state
         if (on_radio_disabled)
         {
-            // NRF_LOG_INFO("on_radio_disabled, %d, %d", on_radio_disabled_rx, on_radio_disabled_rx_ack);
-            // NRF_LOG_INFO("on_radio_disabled(), %d", on_radio_disabled);
             on_radio_disabled();
         }
     }

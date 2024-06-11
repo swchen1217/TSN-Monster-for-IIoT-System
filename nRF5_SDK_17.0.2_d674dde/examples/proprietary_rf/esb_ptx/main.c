@@ -220,7 +220,9 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                 NRF_LOG_DEBUG("TLV OK");
                 NRF_LOG_FLUSH();
 
-                bsp_board_led_invert(LED_CDC_ACM_RX);
+                // bsp_board_led_invert(LED_CDC_ACM_RX);
+                // bsp_board_led_on(LED_CDC_ACM_RX);
+                // bsp_board_led_off(LED_CDC_ACM_RX);
 
                 switch (type)
                 {
@@ -237,15 +239,19 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     urllc_pkt.data[val_len - sizeof(uint32_t)] = '\0';
                     urllc_pkt.time_stamp = TIME_SYNC_TIMESTAMP_TO_USEC(ts_timestamp_get_ticks_u64());
 
+                    NRF_LOG_DEBUG("USBD RX: %d", urllc_pkt.seq_num);
+
                     // echo
-                    size_t size = sprintf(m_usbd_tx_buffer, "%d,%s", urllc_pkt.seq_num, urllc_pkt.data);
-                    app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
+                    // size_t size = sprintf(m_usbd_tx_buffer, "%d,%s", urllc_pkt.seq_num, urllc_pkt.data);
+                    // app_usbd_cdc_acm_write(&m_app_cdc_acm, m_usbd_tx_buffer, size);
 
                     tx_payload.noack = true;
                     tx_payload.length = sizeof(urllc_pkt);
                     // nrf_esb_set_retransmit_count(5);
                     // current counter val + 0.5sec is the ch_tick_target
                     memcpy(tx_payload.data, &urllc_pkt, sizeof(urllc_pkt));
+
+                    bsp_board_led_on(LED_CDC_ACM_RX);
 
                     ret_code_t err = nrf_esb_write_payload(&tx_payload);
 
@@ -260,6 +266,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     }
 
                     nrf_atomic_flag_clear(&urllc_pkt_in_progress);
+                    
+                    bsp_board_led_off(LED_CDC_ACM_RX);
                 }
                 break;
                 case CDC_ACM_TS_1:

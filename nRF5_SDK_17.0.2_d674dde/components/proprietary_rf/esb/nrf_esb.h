@@ -88,11 +88,12 @@ extern "C" {
 // @MWNL default: 32
 // Hardcoded parameters - change if necessary
 #ifndef NRF_ESB_MAX_PAYLOAD_LENGTH
-#define     NRF_ESB_MAX_PAYLOAD_LENGTH          64                  //!< The maximum size of the payload. Valid values are 1 to 252.
+#define     NRF_ESB_MAX_PAYLOAD_LENGTH          252                  //!< The maximum size of the payload. Valid values are 1 to 252.
 #endif
 
-#define     NRF_ESB_TX_FIFO_SIZE                8                   //!< The size of the transmission first-in, first-out buffer.
-#define     NRF_ESB_RX_FIFO_SIZE                8                   //!< The size of the reception first-in, first-out buffer.
+// @MWNL default: 8
+#define     NRF_ESB_TX_FIFO_SIZE                256                   //!< The size of the transmission first-in, first-out buffer.
+#define     NRF_ESB_RX_FIFO_SIZE                256                   //!< The size of the reception first-in, first-out buffer.
 
 // 252 is the largest possible payload size according to the nRF5 architecture.
 STATIC_ASSERT(NRF_ESB_MAX_PAYLOAD_LENGTH <= 252);
@@ -151,7 +152,7 @@ STATIC_ASSERT(NRF_ESB_PIPE_COUNT <= 8);
     .pipe_prefixes      = { 0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8 },   \
     .addr_length        = 5,                                                    \
     .num_pipes          = NRF_ESB_PIPE_COUNT,                                   \
-    .rf_channel         = 2,                                                    \
+    .rf_channel         = 50,                                                    \
     .rx_pipes_enabled   = 0xFF                                                  \
 }
 
