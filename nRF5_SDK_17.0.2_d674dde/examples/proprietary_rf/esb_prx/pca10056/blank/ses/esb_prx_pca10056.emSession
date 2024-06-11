@@ -24,6 +24,7 @@
   <ProjectSessionItem path="esb_prx_pca10056;esb_prx_pca10056;Application"/>
   <ProjectSessionItem path="esb_prx_pca10056;esb_prx_pca10056;nRF_Properitary_RF"/>
   <ProjectSessionItem path="esb_prx_pca10056;esb_prx_pca10056;TimeSync"/>
+  <ProjectSessionItem path="esb_prx_pca10056;esb_prx_pca10056;URLLC"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/BASEPRI;CPU/FAULTMASK;CPU/CONTROL;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="esb_prx_pca10056" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -56,10 +57,13 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="53" y="270" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="268" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="1" y="1331" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../common/time_sync.c" selected="0" top="1305" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="64" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../components/softdevice/common/nrf_sdh_soc.h" selected="0" top="48" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="31" y="940" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../components/proprietary_rf/esb/nrf_esb.c" selected="1" top="923" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="422" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="408" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="16" y="40" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../common/time_sync.c" selected="0" top="30" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="D:/NCU/MWNL/BLE/TSN-Monster-for-IIoT-System/nRF5_SDK_17.0.2_d674dde/examples/common/time_sync.c" useBinaryEdit="0" left="0" path="../../../../../common/time_sync.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="41" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../components/proprietary_rf/esb/nrf_esb.c" selected="0" top="30" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="81" y="155" useTextEdit="1" openedFrom="D:/NCU/MWNL/BLE/TSN-Monster-for-IIoT-System/nRF5_SDK_17.0.2_d674dde/components/proprietary_rf/esb/nrf_esb.c" useBinaryEdit="0" left="0" path="../../../../../../components/proprietary_rf/esb/nrf_esb.h" selected="1" top="129" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/urllc/urllc.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="33" y="5" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/urllc/urllc.h" selected="0" top="0" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="esb_prx_pca10056" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>
