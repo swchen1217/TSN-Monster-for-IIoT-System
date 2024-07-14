@@ -92,18 +92,6 @@ APP_TIMER_DEF(sync_pkt_send_timer); // timer udddddddsed for triggering sending 
 static nrf_atomic_flag_t urllc_pkt_in_progress = false; // this flag is set when urllc pkt is processing
 // @MWNL TimeSync End
 
-// @MWNL TLV Begin
-#define TLV_HEADER_LEN 2 // cdc acm should read two bytes first,type and length each with one byte
-#define TLV_TYPE_INDEX 0
-#define TLV_LENGTH_INDEX 1
-
-// TLV Types
-#define CDC_ACM_DATA 0
-#define CDC_ACM_CHN_MAP_UPDATE 1
-#define CDC_ACM_TS_1 11
-#define CDC_ACM_TS_2 12
-// @MWNL TLV End
-
 // @MWNL ESB Begin
 static nrf_esb_payload_t tx_payload = NRF_ESB_CREATE_PAYLOAD(0, 0x01, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00);
 static nrf_esb_payload_t rx_payload;
@@ -199,7 +187,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
         // index = 0;
         do
         {
-            // NRF_LOG_INFO("RX: char: %d", m_usbd_rx_buffer[0]);
+            NRF_LOG_WARNING("RX: char: %d", m_usbd_rx_buffer[0]);
             // NRF_LOG_FLUSH();
             memcpy(&m_usbd_rx_data[index++], &m_usbd_rx_buffer[0], READ_SIZE);
 
@@ -228,7 +216,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                 {
                 case CDC_ACM_DATA:
                 {
-                    NRF_LOG_DEBUG("USBD RX: CDC_ACM_DATA");
+                    NRF_LOG_WARNING("USBD RX: CDC_ACM_DATA");
 
                     nrf_atomic_flag_set(&urllc_pkt_in_progress);
 
@@ -270,6 +258,34 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
                     bsp_board_led_off(LED_CDC_ACM_RX);
                 }
                 break;
+                case CDC_ACM_CHN_SET:
+                {
+                    NRF_LOG_WARNING("USBD RX: CDC_ACM_CHN_SET");
+                    // NRF_LOG_FLUSH();
+
+                    uint8_t new_chn = m_usbd_rx_data[TLV_HEADER_LEN];
+
+                    // uint32_t new_chn;
+                    // memcpy(&new_chn, &m_usbd_rx_data[TLV_HEADER_LEN], sizeof(uint32_t));
+
+                    NRF_LOG_WARNING("CHN: %d", new_chn);
+
+                    ret_code_t err = nrf_esb_set_rf_channel(new_chn);
+
+                    if (err == NRF_SUCCESS)
+                    {
+                        NRF_LOG_WARNING("nrf_esb_set_rf_channel succeed:");
+                        uint32_t now_chn;
+                        nrf_esb_get_rf_channel(&now_chn);
+                        NRF_LOG_WARNING("%d", now_chn);
+                    }
+                    else
+                    {
+                        NRF_LOG_WARNING("nrf_esb_set_rf_channel failed: %d", err);
+                    }
+
+                }
+                break;
                 case CDC_ACM_TS_1:
                 {
                     NRF_LOG_DEBUG("USBD RX: CDC_ACM_TS_1");
@@ -297,7 +313,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
 
                         uint32_t err_code = ts_tx_start(TIME_SYNC_FREQ_AUTO);
                         APP_ERROR_CHECK(err_code);
-
+  
                         ts_gpio_trigger_enable();
 
                         NRF_LOG_INFO("Starting sync beacon transmission!\r\n");

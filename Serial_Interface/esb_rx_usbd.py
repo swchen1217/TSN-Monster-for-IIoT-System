@@ -1,3 +1,4 @@
+import struct
 import threading
 import time
 from datetime import datetime
@@ -12,6 +13,8 @@ URLLC_DATA_INTERVAL = 0.1  # sleep URLLC_DATA_INTERVAL(seconds) between sending 
 CHA_MAP_UPDATE_INTERVAL = 2
 CHN_MAP_UPDATE_OFFSET = 0.2
 CDC_ACM_DATA_MAX_SIZE = 256  # maximum data bytes that can tranfer each time
+
+CDC_ACM_CHN_SET = 2
 
 # com_list = ['com17']
 com_list = ['com17', 'com18', 'com49']
@@ -43,10 +46,12 @@ def read_data(ser, q):
         #     print(data)
         #     buffer = ""
 
+tmp_com = []
 def com_port_init(data_queue):
     for com_name in com_list:
         try:
             opened_com = serial.Serial(com_name, 115200, timeout=0.5)
+            tmp_com.append(opened_com)
             # assigned read_data task to thread for relative comport and start it immediately
             read_thread = threading.Thread(target=read_data, args=(opened_com, data_queue))
             read_thread.start()
@@ -120,12 +125,30 @@ def check_data(queue, max_count):
                 print(
                     f"S: {data[0]}, D: {time.time() - float(data[2])}..., C {count}, C1 {c['com17']}, C2 {c['com18']}, C3 {c['com49']}, L: {data[1]}, E: {err}, P: {data[4]}, T: {round((time.time() - start_time) * 1000) / 1000}, RSSI: -{data[3]}dbm")
 
+                if data[0] == 1000:
+                    write_data(tmp_com[0], {'type': CDC_ACM_CHN_SET, 'chn': 20})
+
+def write_data(com, q_data):
+    data_type = q_data['type']
+
+    if data_type == CDC_ACM_CHN_SET:
+        val = q_data['chn']
+        tlv_data_header = struct.pack('BB', data_type, 4)
+        tlv_data = struct.pack("I", val)
+        com.write(tlv_data_header)
+        com.write(tlv_data)
+
 
 def main():
     data_queue = queue.Queue(1000)
     com_port_init(data_queue)
+
+    # write_data(tmp_com[0], {'type': CDC_ACM_CHN_SET, 'chn': 20})
+
     # check_data(data_queue)
     check_data(data_queue, 100000)
+
+
 
 
 if __name__ == '__main__':

@@ -9,6 +9,19 @@
 
 #define SYNC_INTERVAL     500 //(ms)
 
+// @MWNL TLV Begin
+#define TLV_HEADER_LEN 2 // cdc acm should read two bytes first,type and length each with one byte
+#define TLV_TYPE_INDEX 0
+#define TLV_LENGTH_INDEX 1
+
+// TLV Types
+#define CDC_ACM_DATA 0
+#define CDC_ACM_CHN_MAP_UPDATE 1
+#define CDC_ACM_TS_1 11
+#define CDC_ACM_TS_2 12
+#define CDC_ACM_CHN_SET 2
+// @MWNL TLV End
+
 typedef struct
 {
     uint8_t message_id;    //recogonize sync_pkt or urllc_payload 

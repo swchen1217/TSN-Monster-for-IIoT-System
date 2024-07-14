@@ -173,21 +173,97 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const *p_inst,
         break;
     case APP_USBD_CDC_ACM_USER_EVT_RX_DONE:
     {
+        // @MWNL
         ret_code_t ret;
-        NRF_LOG_INFO("Bytes waiting: %d", app_usbd_cdc_acm_bytes_stored(p_cdc_acm));
+        // the first byte is read in case : APP_USBD_CDC_ACM_USER_EVT_PORT_OPEN
+        static uint8_t index = 0;
+        static uint8_t type = 0;
+        static uint8_t val_len = 0;
+        static char m_usbd_rx_data[NRF_DRV_USBD_EPSIZE];
+
+        // NRF_LOG_INFO("Bytes waiting: %d", app_usbd_cdc_acm_bytes_stored(p_cdc_acm));
+        // index = 0;
         do
         {
-            /*Get amount of data transfered*/
-            size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
-            NRF_LOG_INFO("RX: size: %lu char: %c", size, m_usbd_rx_buffer[0]);
+            memcpy(&m_usbd_rx_data[index++], &m_usbd_rx_buffer[0], READ_SIZE);
 
-            /* Fetch data until internal buffer is empty */
             ret = app_usbd_cdc_acm_read(&m_app_cdc_acm,
                                         m_usbd_rx_buffer,
                                         READ_SIZE);
+
+            if (index >= TLV_HEADER_LEN)
+            {
+                type = m_usbd_rx_data[TLV_TYPE_INDEX];
+                val_len = m_usbd_rx_data[TLV_LENGTH_INDEX];
+            }
+
+            if (index >= TLV_HEADER_LEN + val_len)
+            {
+
+                switch (type)
+                {
+                case CDC_ACM_CHN_SET:
+                {
+                    NRF_LOG_WARNING("USBD RX: CDC_ACM_CHN_SET");
+
+                    uint32_t new_chn;
+                    memcpy(&new_chn, &m_usbd_rx_data[TLV_HEADER_LEN], sizeof(uint32_t));
+
+                    NRF_LOG_WARNING("CHN: %d", new_chn);
+
+                    ret_code_t err = nrf_esb_stop_rx();
+
+                    if (err == NRF_SUCCESS)
+                    {
+                        NRF_LOG_WARNING("nrf_esb_stop_rx succeed:");
+                    }
+                    else
+                    {
+                        NRF_LOG_WARNING("nrf_esb_stop_rx failed: %d", err);
+                    }
+
+
+                    err = nrf_esb_set_rf_channel(new_chn);
+
+                    if (err == NRF_SUCCESS)
+                    {
+                        NRF_LOG_WARNING("nrf_esb_set_rf_channel succeed:");
+                        uint32_t now_chn;
+                        nrf_esb_get_rf_channel(&now_chn);
+                        NRF_LOG_WARNING("%d", now_chn);
+                    }
+                    else
+                    {
+                        NRF_LOG_WARNING("nrf_esb_set_rf_channel failed: %d", err);
+                    }
+                    
+                    err = nrf_esb_start_rx();
+
+                    if (err == NRF_SUCCESS)
+                    {
+                        NRF_LOG_WARNING("nrf_esb_start_rx succeed:");
+                    }
+                    else
+                    {
+                        NRF_LOG_WARNING("nrf_esb_start_rx failed: %d", err);
+                    }
+
+                }
+                break;
+                default:
+                {
+                    NRF_LOG_WARNING("USBD RX: TYPE NOT DEFINED");
+                    bsp_board_led_invert(LED_CDC_ACM_RX);
+                }
+                break;
+                }
+
+                index = 0;
+            }
+
         } while (ret == NRF_SUCCESS);
 
-        bsp_board_led_invert(LED_CDC_ACM_RX);
+        // bsp_board_led_invert(LED_CDC_ACM_RX);
         break;
     }
     default:
